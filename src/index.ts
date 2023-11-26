@@ -1,8 +1,8 @@
-import * as crypto from 'node:crypto';
+import crypto from 'node:crypto';
 
-export type Dependency<A> = Target<A> | Leaf<A>;
+export type Tree<A> = Leaf<A> | Target<A>;
 
-export type Builder<A, B> = (...deps: Dependency<A>[]) => B;
+export type Builder<A, B> = (...deps: Tree<A>[]) => B | undefined;
 
 export class Leaf<A> {
   readonly id: string;
@@ -11,13 +11,13 @@ export class Leaf<A> {
 
   parents: Target<any>[];
 
-  constructor(value: A) {
-    this.id = crypto.randomUUID();
+  constructor(value: A, id?: string) {
+    this.id = id ?? crypto.randomUUID();
     this.value = value;
     this.parents = [];
   }
 
-  dependencyOf(target: Target<any>): void {
+  addParent(target: Target<any>): void {
     this.parents.push(target);
   }
 
@@ -35,39 +35,36 @@ export class Leaf<A> {
 export class Target<A> {
   readonly id: string;
 
-  value: A;
+  value?: A;
 
   parents: Target<any>[];
 
-  children: Dependency<any>[];
+  children: Tree<any>[];
 
   builder: Builder<any, A>;
 
-  constructor(value: A, deps: Dependency<any>[], builder: Builder<any, A>) {
-    this.id = crypto.randomUUID();
-    this.value = value;
+  constructor(children: Tree<any>[], builder: Builder<any, A>, id?: string) {
+    this.id = id ?? crypto.randomUUID();
     this.parents = [];
-    this.children = deps;
+    this.children = children;
     this.builder = builder;
 
-    for (const c of this.children) {
-      c.dependencyOf(this);
+    for (const child of this.children) {
+      child.addParent(this);
     }
   }
 
-  dependencyOf(target: Target<any>): void {
+  addParent(target: Target<any>): void {
     this.parents.push(target);
   }
 
-  dependsOn(...deps: Dependency<any>[]): void {
+  addChild(...deps: Tree<any>[]): void {
     this.children.push(...deps);
   }
 
   build(): void {
     for (const child of this.children) {
-      if (child instanceof Leaf) {
-        continue;
-      }
+      if (child instanceof Leaf) continue;
       child.build();
     }
     this.value = this.builder(...this.children);
