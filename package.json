@@ -1,0 +1,29 @@
+{
+  "name": "@henrytill/incr",
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "type": "module",
+  "exports": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "files": [
+    "dist/src"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "prepare": "tsc",
+    "lint": "eslint src/*.ts test/*.ts",
+    "build": "tsc",
+    "start": "tsc -w",
+    "pretest": "tsc",
+    "test": "node --test dist/test"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.12.0",
+    "@typescript-eslint/parser": "^6.12.0",
+    "eslint": "^8.54.0",
+    "typescript": "^5.3.2"
+  }
+}
