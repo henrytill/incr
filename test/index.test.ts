@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert';
 
-import { Dependency, ItemVisitor, Leaf, Target } from '../src/index.js';
+import { Dependency, Leaf, Target } from '../src/index.js';
 
 test('basic', () => {
-  const y: Leaf<number, number> = new Leaf(2);
-  const z: Leaf<number, number> = new Leaf(3);
-  const x: Target<number, number> = new Target(0, [y, z], (a, b) => a.value + b.value);
+  const y = new Leaf(2);
+  const z = new Leaf(3);
+  const x = new Target(0, [y, z], (a, b): number => a.value + b.value);
 
   assert.deepStrictEqual(x.children, [y, z]);
   assert.deepStrictEqual(y.parents, [x]);
@@ -26,27 +26,25 @@ test('basic', () => {
 });
 
 test('compound', () => {
-  const y: Leaf<number, number> = new Leaf(2);
-  const z: Leaf<number, number> = new Leaf(3);
-  const x: Target<number, number> = new Target(0, [y, z], (a, b) => a.value + b.value);
-  const w: Target<number, number | string> = new Target(
-    '',
-    [x as Dependency<number, number | string>],
-    (a) => `foo${a.value}`,
-  );
+  const z = new Leaf(3);
+  const y = new Leaf(2);
+  const x = new Target(0, [y, z], (a, b): number => a.value + b.value);
+  const w = new Leaf('bar');
+  const v = new Target('', [w, x], (a, b) => `foo${a.value}-${b.value}`);
 
-  assert.deepStrictEqual(x.parents, [w]);
-  assert.deepStrictEqual(w.children, [x]);
+  assert.deepStrictEqual(x.parents, [v]);
+  assert.deepStrictEqual(v.children, [w, x]);
   x.update();
-  assert.strictEqual(w.value, 'foo5');
+  assert.strictEqual(v.value, 'foobar-5');
 
-  const visitor: ItemVisitor<number, number | string> = {
-    visitLeaf: (l: Leaf<number, number>) => {
+  y.accept({
+    visitLeaf: (l: Leaf<number>) => {
       l.value = 1;
     },
-    visitTarget: (t: Target<number, number | string>) => {},
-  };
-  y.accept(visitor);
-  w.build();
-  assert.strictEqual(w.value, 'foo4');
+    visitTarget: (_t: Target<number>) => {
+      return;
+    },
+  });
+  v.build();
+  assert.strictEqual(v.value, 'foobar-4');
 });

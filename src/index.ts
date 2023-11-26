@@ -1,15 +1,15 @@
 import * as crypto from 'node:crypto';
 
-export type Dependency<A, B> = Target<A, B> | Leaf<A, B>;
+export type Dependency<A> = Target<A> | Leaf<A>;
 
-export type Builder<A, B> = (...deps: Dependency<A, B>[]) => B;
+export type Builder<A, B> = (...deps: Dependency<A>[]) => B;
 
-export class Leaf<A, B> {
+export class Leaf<A> {
   readonly id: string;
 
   value: A;
 
-  parents: Target<A, B>[];
+  parents: Target<any>[];
 
   constructor(value: A) {
     this.id = crypto.randomUUID();
@@ -17,7 +17,7 @@ export class Leaf<A, B> {
     this.parents = [];
   }
 
-  dependencyOf(target: Target<A, B>): void {
+  dependencyOf(target: Target<any>): void {
     this.parents.push(target);
   }
 
@@ -27,23 +27,23 @@ export class Leaf<A, B> {
     }
   }
 
-  accept(visitor: ItemVisitor<A, B>): void {
+  accept(visitor: ItemVisitor<A>): void {
     visitor.visitLeaf(this);
   }
 }
 
-export class Target<A, B> {
+export class Target<A> {
   readonly id: string;
 
-  value: B;
+  value: A;
 
-  parents: Target<A, B>[];
+  parents: Target<any>[];
 
-  children: Dependency<A, B>[];
+  children: Dependency<any>[];
 
-  builder: Builder<A, B>;
+  builder: Builder<any, A>;
 
-  constructor(value: B, deps: Dependency<A, B>[], builder: Builder<A, B>) {
+  constructor(value: A, deps: Dependency<any>[], builder: Builder<any, A>) {
     this.id = crypto.randomUUID();
     this.value = value;
     this.parents = [];
@@ -55,11 +55,11 @@ export class Target<A, B> {
     }
   }
 
-  dependencyOf(target: Target<A, B>): void {
+  dependencyOf(target: Target<any>): void {
     this.parents.push(target);
   }
 
-  dependsOn(...deps: Dependency<A, B>[]): void {
+  dependsOn(...deps: Dependency<any>[]): void {
     this.children.push(...deps);
   }
 
@@ -80,13 +80,13 @@ export class Target<A, B> {
     }
   }
 
-  accept(visitor: ItemVisitor<A, B>): void {
+  accept(visitor: ItemVisitor<A>): void {
     visitor.visitTarget(this);
   }
 }
 
-export abstract class ItemVisitor<A, B> {
-  abstract visitLeaf(leaf: Leaf<A, B>): void;
+export abstract class ItemVisitor<A> {
+  abstract visitLeaf(leaf: Leaf<A>): void;
 
-  abstract visitTarget(target: Target<A, B>): void;
+  abstract visitTarget(target: Target<A>): void;
 }
