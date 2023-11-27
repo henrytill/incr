@@ -44,7 +44,7 @@ test('compound', () => {
     'x',
   ).build();
   const w = new Leaf('results', 'w');
-  const v = new Target([w, x], (a, b) => `${a.value}: ${b.id} is ${b.value}`, 'v').build();
+  const v = new Target([w, x], (a, b) => `${a.value}: ${b.key} is ${b.value}`, 'v').build();
 
   assert.strictEqual(v.value, 'results: x is 5');
   assert.strictEqual(v.parents.length, 0);
@@ -52,15 +52,15 @@ test('compound', () => {
   assert.deepStrictEqual(w.parents, [v]);
   assert.deepStrictEqual(v.children, [w, x]);
 
-  assert.strictEqual(v.id, 'v');
-  assert.strictEqual(w.id, 'w');
-  assert.strictEqual(x.id, 'x');
-  assert.strictEqual(y.id, 'y');
-  assert.strictEqual(z.id, 'z');
+  assert.strictEqual(v.key, 'v');
+  assert.strictEqual(w.key, 'w');
+  assert.strictEqual(x.key, 'x');
+  assert.strictEqual(y.key, 'y');
+  assert.strictEqual(z.key, 'z');
 
   const visitor: DependencyVisitor<number, number | undefined> = {
     leaf: (l: Leaf<number>) => {
-      l.value += 1;
+      l.value = (l.value ?? 0) + 1;
       return l.value;
     },
     target: (_: Target<number>) => {

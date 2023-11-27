@@ -6,7 +6,7 @@ export type WatchFunction<A> = (filename: PathLike, event: FileChangeInfo<string
 /**
  * Implements leading-edge debounce on an asynchronous event stream.
  */
-async function* debounce<T>(events: AsyncIterable<T>, delay: number): AsyncGenerator<T> {
+export async function* debounce<T>(events: AsyncIterable<T>, delay: number): AsyncGenerator<T> {
   let begin = Date.now() - delay; // allow first event to pass through
   for await (const event of events) {
     const now = Date.now();
@@ -17,7 +17,7 @@ async function* debounce<T>(events: AsyncIterable<T>, delay: number): AsyncGener
   }
 }
 
-async function watch(
+export async function watch(
   filename: PathLike,
   signal: AbortSignal,
   f: WatchFunction<void>,

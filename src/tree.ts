@@ -17,18 +17,18 @@ export type Builder<A, B> = (...deps: Dependency<A>[]) => B | undefined;
  * The value of a leaf node is set by the user.
  */
 export class Leaf<A> {
-  private _value: A;
+  protected _value?: A;
 
-  readonly id: string;
+  readonly key: string;
 
   parents: Target<any>[] = [];
 
-  constructor(value: A, id?: string) {
+  constructor(value?: A, key?: string) {
     this._value = value;
-    this.id = id ?? crypto.randomUUID();
+    this.key = key ?? crypto.randomUUID();
   }
 
-  get value(): A {
+  get value(): A | undefined {
     return this._value;
   }
 
@@ -62,7 +62,7 @@ export class Leaf<A> {
 export class Target<A> {
   private _value?: A;
 
-  readonly id: string;
+  readonly key: string;
 
   parents: Target<any>[] = [];
 
@@ -72,10 +72,10 @@ export class Target<A> {
 
   shouldRebuild = true;
 
-  constructor(children: Dependency<any>[], builder: Builder<any, A>, id?: string) {
+  constructor(children: Dependency<any>[], builder: Builder<any, A>, key?: string) {
     this.children = children;
     this.builder = builder;
-    this.id = id ?? crypto.randomUUID();
+    this.key = key ?? crypto.randomUUID();
 
     for (const child of this.children) {
       child.addParent(this);
