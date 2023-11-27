@@ -1,8 +1,15 @@
 import crypto from 'node:crypto';
 
-export type Node<A> = Leaf<A> | Target<A>;
+import { ignore } from './common.js';
 
-export type Builder<A, B> = (...deps: Node<A>[]) => B | undefined;
+export type Dependency<A> = Leaf<A> | Target<A>;
+
+export type DependencyVisitor<A> = {
+  visitLeaf(leaf: Leaf<A>): void;
+  visitTarget(target: Target<A>): void;
+};
+
+export type Builder<A, B> = (...deps: Dependency<A>[]) => B | undefined;
 
 /**
  * A leaf node in the dependency tree.
@@ -10,16 +17,26 @@ export type Builder<A, B> = (...deps: Node<A>[]) => B | undefined;
  * The value of a leaf node is set by the user.
  */
 export class Leaf<A> {
-  readonly id: string;
+  private _value: A;
 
-  value: A;
+  readonly id: string;
 
   parents: Target<any>[];
 
   constructor(value: A, id?: string) {
+    this._value = value;
     this.id = id ?? crypto.randomUUID();
-    this.value = value;
     this.parents = [];
+  }
+
+  get value(): A {
+    return this._value;
+  }
+
+  set value(value: A) {
+    if (value === this._value) return;
+    this._value = value;
+    this.update();
   }
 
   addParent(target: Target<any>): void {
@@ -32,7 +49,7 @@ export class Leaf<A> {
     }
   }
 
-  accept(visitor: ItemVisitor<A>): void {
+  accept(visitor: DependencyVisitor<A>): void {
     visitor.visitLeaf(this);
   }
 }
@@ -44,17 +61,17 @@ export class Leaf<A> {
  * node's children as input.
  */
 export class Target<A> {
-  readonly id: string;
+  private _value?: A;
 
-  value?: A;
+  readonly id: string;
 
   parents: Target<any>[];
 
-  children: Node<any>[];
+  children: Dependency<any>[];
 
   builder: Builder<any, A>;
 
-  constructor(children: Node<any>[], builder: Builder<any, A>, id?: string) {
+  constructor(children: Dependency<any>[], builder: Builder<any, A>, id?: string) {
     this.id = id ?? crypto.randomUUID();
     this.parents = [];
     this.children = children;
@@ -65,36 +82,35 @@ export class Target<A> {
     }
   }
 
+  get value(): A | undefined {
+    return this._value;
+  }
+
   addParent(target: Target<any>): void {
     this.parents.push(target);
   }
 
-  addChild(...deps: Node<any>[]): void {
+  addChild(...deps: Dependency<any>[]): void {
     this.children.push(...deps);
   }
 
-  build(): void {
+  build(): Target<A> {
     for (const child of this.children) {
       if (child instanceof Leaf) continue;
-      child.build();
+      ignore(child.build());
     }
-    this.value = this.builder(...this.children);
+    this._value = this.builder(...this.children);
+    return this;
   }
 
   update(): void {
-    this.value = this.builder(...this.children);
+    this._value = this.builder(...this.children);
     for (const parent of this.parents) {
       parent.update();
     }
   }
 
-  accept(visitor: ItemVisitor<A>): void {
+  accept(visitor: DependencyVisitor<A>): void {
     visitor.visitTarget(this);
   }
-}
-
-export abstract class ItemVisitor<A> {
-  abstract visitLeaf(leaf: Leaf<A>): void;
-
-  abstract visitTarget(target: Target<A>): void;
 }
