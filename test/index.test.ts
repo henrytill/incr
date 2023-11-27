@@ -58,15 +58,17 @@ test('compound', () => {
   assert.strictEqual(y.id, 'y');
   assert.strictEqual(z.id, 'z');
 
-  const visitor: DependencyVisitor<number> = {
-    visitLeaf: (l: Leaf<number>) => {
+  const visitor: DependencyVisitor<number, number | undefined> = {
+    leaf: (l: Leaf<number>) => {
       l.value += 1;
+      return l.value;
     },
-    visitTarget: (_: Target<number>) => {
-      return;
+    target: (_: Target<number>) => {
+      return undefined;
     },
   };
-  y.accept(visitor);
+  const ret = y.accept(visitor);
+  assert.strictEqual(ret, 3);
   assert.strictEqual(x.shouldRebuild, true);
   assert.strictEqual(v.shouldRebuild, true);
   assert.strictEqual(v.build().value, 'results: x is 6');

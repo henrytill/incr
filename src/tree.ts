@@ -4,9 +4,9 @@ import { ignore } from './common.js';
 
 export type Dependency<A> = Leaf<A> | Target<A>;
 
-export type DependencyVisitor<A> = {
-  visitLeaf(leaf: Leaf<A>): void;
-  visitTarget(target: Target<A>): void;
+export type DependencyVisitor<A, B> = {
+  leaf(leaf: Leaf<A>): B;
+  target(target: Target<A>): B;
 };
 
 export type Builder<A, B> = (...deps: Dependency<A>[]) => B | undefined;
@@ -49,8 +49,8 @@ export class Leaf<A> {
     }
   }
 
-  accept(visitor: DependencyVisitor<A>): void {
-    visitor.visitLeaf(this);
+  accept<B>(visitor: DependencyVisitor<A, B>): B {
+    return visitor.leaf(this);
   }
 }
 
@@ -115,7 +115,7 @@ export class Target<A> {
     }
   }
 
-  accept(visitor: DependencyVisitor<A>): void {
-    visitor.visitTarget(this);
+  accept<B>(visitor: DependencyVisitor<A, B>): B {
+    return visitor.target(this);
   }
 }
