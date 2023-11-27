@@ -21,12 +21,11 @@ export class Leaf<A> {
 
   readonly id: string;
 
-  parents: Target<any>[];
+  parents: Target<any>[] = [];
 
   constructor(value: A, id?: string) {
     this._value = value;
     this.id = id ?? crypto.randomUUID();
-    this.parents = [];
   }
 
   get value(): A {
@@ -65,7 +64,7 @@ export class Target<A> {
 
   readonly id: string;
 
-  parents: Target<any>[];
+  parents: Target<any>[] = [];
 
   children: Dependency<any>[];
 
@@ -74,10 +73,9 @@ export class Target<A> {
   shouldRebuild = true;
 
   constructor(children: Dependency<any>[], builder: Builder<any, A>, id?: string) {
-    this.id = id ?? crypto.randomUUID();
-    this.parents = [];
     this.children = children;
     this.builder = builder;
+    this.id = id ?? crypto.randomUUID();
 
     for (const child of this.children) {
       child.addParent(this);
