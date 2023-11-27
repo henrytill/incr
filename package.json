@@ -18,7 +18,7 @@
     "build": "tsc",
     "start": "tsc -w",
     "pretest": "tsc",
-    "test": "node --test dist/test"
+    "test": "node --enable-source-maps --test dist/test"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
