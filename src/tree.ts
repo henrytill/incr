@@ -71,6 +71,8 @@ export class Target<A> {
 
   builder: Builder<any, A>;
 
+  shouldRebuild = true;
+
   constructor(children: Dependency<any>[], builder: Builder<any, A>, id?: string) {
     this.id = id ?? crypto.randomUUID();
     this.parents = [];
@@ -99,12 +101,15 @@ export class Target<A> {
       if (child instanceof Leaf) continue;
       ignore(child.build());
     }
-    this._value = this.builder(...this.children);
+    if (this.shouldRebuild) {
+      this._value = this.builder(...this.children);
+      this.shouldRebuild = false;
+    }
     return this;
   }
 
   update(): void {
-    this._value = this.builder(...this.children);
+    this.shouldRebuild = true;
     for (const parent of this.parents) {
       parent.update();
     }

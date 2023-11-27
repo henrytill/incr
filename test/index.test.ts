@@ -20,10 +20,15 @@ test('basic', () => {
   assert.deepStrictEqual(z.parents, [x]);
 
   y.value = 4;
-  assert.strictEqual(x.value, 7);
+  assert.strictEqual(x.build().value, 7);
 
   z.value = 5;
-  assert.strictEqual(x.value, 9);
+  assert.strictEqual(x.build().value, 9);
+
+  assert.strictEqual(count, 3);
+
+  z.value = 5;
+  assert.strictEqual(x.build().value, 9);
 
   assert.strictEqual(count, 3);
 });
@@ -62,8 +67,12 @@ test('compound', () => {
     },
   };
   y.accept(visitor);
-  assert.strictEqual(v.value, 'results: x is 6');
+  assert.strictEqual(x.shouldRebuild, true);
+  assert.strictEqual(v.shouldRebuild, true);
+  assert.strictEqual(v.build().value, 'results: x is 6');
 
   w.value = 'hello';
-  assert.strictEqual(v.value, 'hello: x is 6');
+  assert.strictEqual(x.shouldRebuild, false);
+  assert.strictEqual(v.shouldRebuild, true);
+  assert.strictEqual(v.build().value, 'hello: x is 6');
 });
