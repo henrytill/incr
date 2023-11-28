@@ -3,41 +3,11 @@ import { PathLike } from 'node:fs';
 import fs from 'node:fs/promises';
 
 import { Channel } from './channel.js';
+import { findRoots } from './tree.js';
 import { AsyncCell, AsyncComputable } from './async.js';
 import { debounce } from './watch.js';
 
 export type HashDigest = string;
-
-type BuildTree = Input | Target;
-
-function findRoots(input: Input): Target[] {
-  if (input.parents.length === 0) {
-    return [];
-  }
-
-  const ret: Target[] = [];
-  const stack: BuildTree[] = [input];
-  const visited = new Set<BuildTree>();
-
-  while (stack.length > 0) {
-    const node = stack.pop();
-    if (node === undefined) {
-      throw new Error('Unexpected undefined node');
-    }
-    if (visited.has(node)) {
-      continue;
-    }
-    visited.add(node);
-    if (node instanceof Target && node.parents.length === 0) {
-      ret.push(node);
-      continue;
-    }
-    const unvisited = node.parents.filter((parent) => !visited.has(parent));
-    stack.push(...unvisited);
-  }
-
-  return ret;
-}
 
 export function hash(input: BinaryLike): HashDigest {
   const hash = crypto.createHash('sha256');

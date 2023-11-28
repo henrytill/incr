@@ -127,3 +127,32 @@ export class AutoComputable<A> extends Computable<A> {
     }
   }
 }
+
+export function findRoots(input: Node<any>): Computable<any>[] {
+  if (input instanceof Cell && input.parents.length === 0) {
+    return [];
+  }
+
+  const ret: Computable<any>[] = [];
+  const stack: Node<any>[] = [input];
+  const visited = new Set<Node<any>>();
+
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (node === undefined) {
+      throw new Error('Unexpected undefined node');
+    }
+    if (visited.has(node)) {
+      continue;
+    }
+    visited.add(node);
+    if (node instanceof Computable && node.parents.length === 0) {
+      ret.push(node);
+      continue;
+    }
+    const unvisited = node.parents.filter((parent) => !visited.has(parent));
+    stack.push(...unvisited);
+  }
+
+  return ret;
+}
