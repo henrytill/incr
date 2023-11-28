@@ -53,6 +53,10 @@ export class Cell<A> {
     this.parents.push(ret);
     return ret;
   }
+
+  roots(): Computable<any>[] {
+    return findRoots(this);
+  }
 }
 
 /**
@@ -116,6 +120,10 @@ export class Computable<A> {
     this.parents.push(ret);
     return ret;
   }
+
+  roots(): Computable<any>[] {
+    return findRoots(this);
+  }
 }
 
 export class AutoComputable<A> extends Computable<A> {
@@ -128,7 +136,7 @@ export class AutoComputable<A> extends Computable<A> {
   }
 }
 
-export function findRoots(input: Node<any>): Computable<any>[] {
+function findRoots(input: Node<any>): Computable<any>[] {
   if (input instanceof Cell && input.parents.length === 0) {
     return [];
   }

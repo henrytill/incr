@@ -4,7 +4,6 @@ import fs from 'node:fs/promises';
 
 import { AsyncCell, AsyncComputable } from './async.js';
 import { Channel } from './channel.js';
-import { findRoots } from './core.js';
 import { debounce } from './watch.js';
 
 export type HashDigest = string;
@@ -24,7 +23,7 @@ async function watch(input: Input, signal: AbortSignal): Promise<void> {
       input.value = fs.readFile(filename).then(hash);
       console.debug('Updating', filename);
       await input.value;
-      const roots = findRoots(input);
+      const roots = input.roots();
       console.debug('Rebuilding', roots.map((root) => root.key).join(', '));
       for (const root of roots) {
         root.compute();
