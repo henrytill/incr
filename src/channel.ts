@@ -18,7 +18,7 @@ export class Channel<T> {
   }
 
   send(message: T): boolean {
-    if (this.running == false) {
+    if (!this.running) {
       return false;
     }
     const resolve = this.resolveQueue.shift();
@@ -31,7 +31,7 @@ export class Channel<T> {
   }
 
   close() {
-    if (this.running == false) {
+    if (!this.running) {
       return;
     }
     this.running = false;

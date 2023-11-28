@@ -3,10 +3,7 @@ import { describe, it, before, after } from 'node:test';
 
 import { Channel } from '../src/channel.js';
 
-type Message = {
-  tag: 'value' | 'close';
-  value?: string;
-};
+type Message = { tag: 'value'; value: string } | { tag: 'close' };
 
 describe('Channel', () => {
   let channel: Channel<Message>;
@@ -26,8 +23,7 @@ describe('Channel', () => {
       for await (const message of channel.receive()) {
         switch (message?.tag) {
           case 'close':
-            channel.close();
-            break;
+            channel.close(); // eslint-disable-next-line no-fallthrough
           case 'value':
             received.push(message);
             break;
@@ -47,6 +43,6 @@ describe('Channel', () => {
 
     await consumer;
 
-    assert.deepStrictEqual(received, sent.slice(0, -1));
+    assert.deepStrictEqual(received, sent);
   });
 });
