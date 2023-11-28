@@ -61,7 +61,7 @@ export class Input extends Leaf<Promise<HashDigest>> {
     });
   }
 
-  override get value(): Promise<HashDigest> | undefined {
+  override get value(): Promise<HashDigest> {
     return super.value;
   }
 }

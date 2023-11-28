@@ -17,18 +17,18 @@ export type Builder<A, B> = (...deps: Dependency<A>[]) => B | undefined;
  * The value of a leaf node is set by the user.
  */
 export class Leaf<A> {
-  protected _value?: A;
+  protected _value: A;
 
   readonly key: string;
 
   parents: Target<any>[] = [];
 
-  constructor(value?: A, key?: string) {
+  constructor(value: A, key?: string) {
     this._value = value;
     this.key = key ?? crypto.randomUUID();
   }
 
-  get value(): A | undefined {
+  get value(): A {
     return this._value;
   }
 

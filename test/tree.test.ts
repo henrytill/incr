@@ -60,7 +60,7 @@ test('compound', () => {
 
   const visitor: DependencyVisitor<number, number | undefined> = {
     leaf: (l: Leaf<number>) => {
-      l.value = (l.value ?? 0) + 1;
+      l.value += 1;
       return l.value;
     },
     target: (_: Target<number>) => {
