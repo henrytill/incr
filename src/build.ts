@@ -3,26 +3,26 @@ import { PathLike } from 'node:fs';
 import fs from 'node:fs/promises';
 
 import { Channel } from './channel.js';
-import { DependencyVisitor, Leaf, Target } from './tree.js';
+import { NodeVisitor, Cell, Computable } from './tree.js';
 import { debounce } from './watch.js';
 
 export type HashDigest = string;
 
-type BuildVisitor<A> = DependencyVisitor<Promise<HashDigest>, A>;
+type BuildVisitor<A> = NodeVisitor<Promise<HashDigest>, A>;
 
-const findRootsVisitor: BuildVisitor<Output[]> = {
-  leaf: (input) => {
-    if (input.parents.length === 0) {
+const findRootsVisitor: BuildVisitor<Target[]> = {
+  visitCell: (node) => {
+    if (node.parents.length === 0) {
       return [];
     } else {
-      return input.parents.flatMap((parent) => parent.accept(findRootsVisitor));
+      return node.parents.flatMap((parent) => parent.accept(findRootsVisitor));
     }
   },
-  target: (output) => {
-    if (output.parents.length === 0) {
-      return [output];
+  visitComputable: (node) => {
+    if (node.parents.length === 0) {
+      return [node];
     } else {
-      return output.parents.flatMap((parent) => parent.accept(findRootsVisitor));
+      return node.parents.flatMap((parent) => parent.accept(findRootsVisitor));
     }
   },
 };
@@ -45,7 +45,7 @@ async function watch(input: Input, signal: AbortSignal): Promise<void> {
       const roots = input.accept(findRootsVisitor);
       console.debug('Rebuilding', roots.map((root) => root.key).join(', '));
       for (const root of roots) {
-        root.build();
+        root.compute();
       }
       input.notifications.send(filename);
     }
@@ -58,7 +58,7 @@ async function watch(input: Input, signal: AbortSignal): Promise<void> {
   }
 }
 
-export class Input extends Leaf<Promise<HashDigest>> {
+export class Input extends Cell<Promise<HashDigest>> {
   watcher: Promise<void>;
   notifications: Channel<string> = new Channel();
 
@@ -72,8 +72,8 @@ export class Input extends Leaf<Promise<HashDigest>> {
       throw new TypeError('filename must be a string');
     }
     const value = fs.readFile(filename).then(hash);
-    const leaf = new Input(value, filename.toString(), signal);
-    return leaf;
+    const ret = new Input(value, filename.toString(), signal);
+    return ret;
   }
 
   override set value(value: Promise<HashDigest>) {
@@ -90,4 +90,4 @@ export class Input extends Leaf<Promise<HashDigest>> {
   }
 }
 
-export class Output extends Target<Promise<HashDigest>> {}
+export class Target extends Computable<Promise<HashDigest>> {}

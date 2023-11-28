@@ -1,17 +1,17 @@
 import assert from 'node:assert';
 import test from 'node:test';
 
-import { DependencyVisitor, Leaf, Target } from '../src/tree.js';
+import { NodeVisitor, Cell, Computable } from '../src/tree.js';
 
 test('basic', () => {
   let count = 0;
 
-  const y = new Leaf(2);
-  const z = new Leaf(3);
-  const x = new Target([y, z], function (this: any, a, b): number {
+  const y = new Cell(2);
+  const z = new Cell(3);
+  const x = new Computable([y, z], function (this: any, a, b): number {
     count += 1;
     return a.value + b.value;
-  }).build();
+  }).compute();
 
   assert.strictEqual(x.value, 5);
   assert.strictEqual(x.parents.length, 0);
@@ -20,31 +20,31 @@ test('basic', () => {
   assert.deepStrictEqual(z.parents, [x]);
 
   y.value = 4;
-  assert.strictEqual(x.build().value, 7);
+  assert.strictEqual(x.compute().value, 7);
 
   z.value = 5;
-  assert.strictEqual(x.build().value, 9);
+  assert.strictEqual(x.compute().value, 9);
 
   assert.strictEqual(count, 3);
 
   z.value = 5;
-  assert.strictEqual(x.build().value, 9);
+  assert.strictEqual(x.compute().value, 9);
 
   assert.strictEqual(count, 3);
 });
 
 test('compound', () => {
-  const z = new Leaf(3, 'z');
-  const y = new Leaf(2, 'y');
-  const x = new Target(
+  const z = new Cell(3, 'z');
+  const y = new Cell(2, 'y');
+  const x = new Computable(
     [y, z],
     function (this: any, a, b): number {
       return a.value + b.value;
     },
     'x',
-  ).build();
-  const w = new Leaf('results', 'w');
-  const v = new Target([w, x], (a, b) => `${a.value}: ${b.key} is ${b.value}`, 'v').build();
+  ).compute();
+  const w = new Cell('results', 'w');
+  const v = new Computable([w, x], (a, b) => `${a.value}: ${b.key} is ${b.value}`, 'v').compute();
 
   assert.strictEqual(v.value, 'results: x is 5');
   assert.strictEqual(v.parents.length, 0);
@@ -58,12 +58,12 @@ test('compound', () => {
   assert.strictEqual(y.key, 'y');
   assert.strictEqual(z.key, 'z');
 
-  const visitor: DependencyVisitor<number, number | undefined> = {
-    leaf: (l: Leaf<number>) => {
-      l.value += 1;
-      return l.value;
+  const visitor: NodeVisitor<number, number | undefined> = {
+    visitCell: (node: Cell<number>) => {
+      node.value += 1;
+      return node.value;
     },
-    target: (_: Target<number>) => {
+    visitComputable: (_node: Computable<number>) => {
       return undefined;
     },
   };
@@ -71,10 +71,10 @@ test('compound', () => {
   assert.strictEqual(ret, 3);
   assert.strictEqual(x.shouldRebuild, true);
   assert.strictEqual(v.shouldRebuild, true);
-  assert.strictEqual(v.build().value, 'results: x is 6');
+  assert.strictEqual(v.compute().value, 'results: x is 6');
 
   w.value = 'hello';
   assert.strictEqual(x.shouldRebuild, false);
   assert.strictEqual(v.shouldRebuild, true);
-  assert.strictEqual(v.build().value, 'hello: x is 6');
+  assert.strictEqual(v.compute().value, 'hello: x is 6');
 });

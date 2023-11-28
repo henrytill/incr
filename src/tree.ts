@@ -2,26 +2,26 @@ import crypto from 'node:crypto';
 
 import { ignore } from './common.js';
 
-export type Dependency<A> = Leaf<A> | Target<A>;
+export type Node<A> = Cell<A> | Computable<A>;
 
-export type DependencyVisitor<A, B> = {
-  leaf(leaf: Leaf<A>): B;
-  target(target: Target<A>): B;
+export type NodeVisitor<A, B> = {
+  visitCell(node: Cell<A>): B;
+  visitComputable(node: Computable<A>): B;
 };
 
-export type Builder<A, B> = (...deps: Dependency<A>[]) => B | undefined;
+export type ComputeFunction<A, B> = (...deps: Node<A>[]) => B | undefined;
 
 /**
- * A leaf node in the dependency tree.
+ * A leaf node in the tree.
  *
  * The value of a leaf node is set by the user.
  */
-export class Leaf<A> {
+export class Cell<A> {
   protected _value: A;
 
   readonly key: string;
 
-  parents: Target<any>[] = [];
+  parents: Computable<any>[] = [];
 
   constructor(value: A, key?: string) {
     this._value = value;
@@ -38,8 +38,8 @@ export class Leaf<A> {
     this.update();
   }
 
-  addParent(target: Target<any>): void {
-    this.parents.push(target);
+  addParents(...parents: Computable<any>[]): void {
+    this.parents.push(...parents);
   }
 
   update(): void {
@@ -48,37 +48,37 @@ export class Leaf<A> {
     }
   }
 
-  accept<B>(visitor: DependencyVisitor<A, B>): B {
-    return visitor.leaf(this);
+  accept<B>(visitor: NodeVisitor<A, B>): B {
+    return visitor.visitCell(this);
   }
 }
 
 /**
- * A target node in the dependency tree.
+ * A branch node in the tree.
  *
- * The value of a target node is computed by a builder function which takes the
+ * The value of a branch node is computed by a compute function which takes the
  * node's children as input.
  */
-export class Target<A> {
+export class Computable<A> {
   private _value?: A;
 
   readonly key: string;
 
-  parents: Target<any>[] = [];
+  parents: Computable<any>[] = [];
 
-  children: Dependency<any>[];
+  children: Node<any>[];
 
-  builder: Builder<any, A>;
+  builder: ComputeFunction<any, A>;
 
   shouldRebuild = true;
 
-  constructor(children: Dependency<any>[], builder: Builder<any, A>, key?: string) {
+  constructor(children: Node<any>[], builder: ComputeFunction<any, A>, key?: string) {
     this.children = children;
     this.builder = builder;
     this.key = key ?? crypto.randomUUID();
 
     for (const child of this.children) {
-      child.addParent(this);
+      child.addParents(this);
     }
   }
 
@@ -86,18 +86,18 @@ export class Target<A> {
     return this._value;
   }
 
-  addParent(target: Target<any>): void {
-    this.parents.push(target);
+  addParents(...parents: Computable<any>[]): void {
+    this.parents.push(...parents);
   }
 
-  addChild(...deps: Dependency<any>[]): void {
-    this.children.push(...deps);
+  addChildren(...children: Node<any>[]): void {
+    this.children.push(...children);
   }
 
-  build(): Target<A> {
+  compute(): Computable<A> {
     for (const child of this.children) {
-      if (child instanceof Leaf) continue;
-      ignore(child.build());
+      if (child instanceof Cell) continue;
+      ignore(child.compute());
     }
     if (this.shouldRebuild) {
       this._value = this.builder(...this.children);
@@ -113,7 +113,7 @@ export class Target<A> {
     }
   }
 
-  accept<B>(visitor: DependencyVisitor<A, B>): B {
-    return visitor.target(this);
+  accept<B>(visitor: NodeVisitor<A, B>): B {
+    return visitor.visitComputable(this);
   }
 }

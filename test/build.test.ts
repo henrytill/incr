@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, it, before, after } from 'node:test';
 
-import { Input, Output, hash } from '../src/build.js';
+import { Input, Target, hash } from '../src/build.js';
 
 describe('Output', () => {
   let ac: AbortController;
@@ -33,11 +33,11 @@ describe('Output', () => {
 
     const { signal } = ac;
 
-    const helloLeaf = Input.of(hello, signal);
-    const worldLeaf = Input.of(world, signal);
+    const helloInput = Input.of(hello, signal);
+    const worldInput = Input.of(world, signal);
 
     const helloNotificationsConsumer = (async () => {
-      for await (const filename of helloLeaf.notifications.receive()) {
+      for await (const filename of helloInput.notifications.receive()) {
         console.log('Rebuild initiated by', filename, 'is complete');
         if (filename === hello) {
           break;
@@ -45,13 +45,13 @@ describe('Output', () => {
       }
     })();
 
-    const helloHash = await helloLeaf.value;
-    const worldHash = await worldLeaf.value;
+    const helloHash = await helloInput.value;
+    const worldHash = await worldInput.value;
     assert.strictEqual(helloHash, hash(helloContents));
     assert.strictEqual(worldHash, hash(worldContents));
 
-    const outTarget = new Output(
-      [helloLeaf, worldLeaf],
+    const outTarget = new Target(
+      [helloInput, worldInput],
       async (a, b) => {
         const helloContents = await fs.readFile(a.key);
         const worldContents = await fs.readFile(b.key);
@@ -60,11 +60,11 @@ describe('Output', () => {
         return hash(contents);
       },
       out,
-    ).build();
+    ).compute();
 
-    assert.deepStrictEqual(helloLeaf.parents, [outTarget]);
-    assert.deepStrictEqual(worldLeaf.parents, [outTarget]);
-    assert.deepStrictEqual(outTarget.children, [helloLeaf, worldLeaf]);
+    assert.deepStrictEqual(helloInput.parents, [outTarget]);
+    assert.deepStrictEqual(worldInput.parents, [outTarget]);
+    assert.deepStrictEqual(outTarget.children, [helloInput, worldInput]);
 
     const outHash = await outTarget.value;
     const outContents = await fs.readFile(out);
@@ -80,8 +80,8 @@ describe('Output', () => {
     assert.strictEqual(outContentsUpdated.toString(), 'Goodbye, world!');
     assert.notStrictEqual(outHash, outHashUpdated);
 
-    helloLeaf.notifications.close();
+    helloInput.notifications.close();
     ac.abort();
-    await Promise.all([helloLeaf.watcher, worldLeaf.watcher]);
+    await Promise.all([helloInput.watcher, worldInput.watcher]);
   });
 });
