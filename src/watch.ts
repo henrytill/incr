@@ -32,7 +32,7 @@ export async function* debounce<T>(events: AsyncIterable<T>, delay: number): Asy
   }
 }
 
-async function makeWatcher(
+async function watch(
   input: Pick<Watch, 'filename' | 'channel'>,
   signal: AbortSignal,
 ): Promise<void> {
@@ -53,9 +53,8 @@ async function makeWatcher(
 }
 
 export class WatchGroup {
-  readonly watches: Watch[] = [];
-
   private signal: AbortSignal;
+  readonly watches: Watch[] = [];
 
   constructor(signal: AbortSignal) {
     this.signal = signal;
@@ -71,11 +70,11 @@ export class WatchGroup {
 
   open(): void {
     for (const w of this.watches) {
-      w.watcher = makeWatcher(w, this.signal);
+      w.watcher = watch(w, this.signal);
     }
   }
 
   async close(): Promise<void> {
-    await Promise.all(this.watches.map((watch) => watch.watcher));
+    await Promise.all(this.watches.map((w) => w.watcher));
   }
 }
