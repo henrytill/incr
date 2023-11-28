@@ -1,5 +1,5 @@
+export * from './core.js';
 export * from './async.js';
 export * from './build.js';
 export * from './channel.js';
-export * from './tree.js';
 export * from './watch.js';

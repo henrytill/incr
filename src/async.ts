@@ -1,4 +1,4 @@
-import { Cell, Computable } from './tree.js';
+import { Cell, Computable } from './core.js';
 
 export class AsyncCell<T> extends Cell<Promise<T>> {
   override set value(value: Promise<T>) {

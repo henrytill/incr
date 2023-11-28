@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import test from 'node:test';
 
-import { NodeVisitor, Cell, Computable, AutoComputable } from '../src/tree.js';
+import { NodeVisitor, Cell, Computable, AutoComputable } from '../src/core.js';
 
 test('basic', () => {
   let count = 0;
