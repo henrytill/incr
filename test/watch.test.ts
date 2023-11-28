@@ -5,7 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { describe, it, before, after } from 'node:test';
 
-import { WatchFunction, WatchGroup } from '../src/index.js';
+import { WatchFunction, WatchGroup } from '../src/watch.js';
 
 import { sleep } from './common.js';
 

@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import test from 'node:test';
 
-import { DependencyVisitor, Leaf, Target } from '../src/index.js';
+import { DependencyVisitor, Leaf, Target } from '../src/tree.js';
 
 test('basic', () => {
   let count = 0;
