@@ -2,6 +2,7 @@ import crypto, { BinaryLike } from 'node:crypto';
 import { PathLike } from 'node:fs';
 import fs from 'node:fs/promises';
 
+import { Channel } from './channel.js';
 import { Leaf, Target } from './tree.js';
 import { debounce } from './watch.js';
 
@@ -22,6 +23,7 @@ async function watch(input: Input, signal: AbortSignal): Promise<void> {
       input.value = fs.readFile(filename).then(hash);
       console.debug('Updating', filename);
       await input.value;
+      input.notifications.send(filename);
     }
   } catch (err: any) {
     if (err.name === 'AbortError') {
@@ -34,6 +36,7 @@ async function watch(input: Input, signal: AbortSignal): Promise<void> {
 
 export class Input extends Leaf<Promise<HashDigest>> {
   watcher: Promise<void>;
+  notifications: Channel<string> = new Channel();
 
   private constructor(value: Promise<HashDigest>, key: string, signal: AbortSignal) {
     super(value, key);

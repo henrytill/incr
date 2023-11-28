@@ -1,17 +1,10 @@
 import assert from 'node:assert';
-import { PathLike } from 'node:fs';
-import fs, { FileChangeInfo } from 'node:fs/promises';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { describe, it, before, after } from 'node:test';
 
-import { WatchFunction, WatchGroup } from '../src/watch.js';
-
-import { sleep } from './common.js';
-
-const kSleepDuration = 1001;
-
-const pause = sleep.bind(null, kSleepDuration);
+import { Message, WatchGroup } from '../src/watch.js';
 
 describe('WatchGroup', () => {
   let ac: AbortController;
@@ -29,34 +22,40 @@ describe('WatchGroup', () => {
 
   it('should watch a file', async () => {
     const filename = dirname + '/test.txt';
-
-    const events: [PathLike, FileChangeInfo<string>][] = [];
-    const f: WatchFunction<void> = async (filename, event) => {
-      events.push([filename, event]);
-    };
+    await fs.writeFile(filename, 'test');
 
     const { signal } = ac;
-    const group = new WatchGroup(signal, f);
-
+    const group = new WatchGroup(signal);
     group.add(dirname);
 
-    assert.deepStrictEqual(group.watched, new Set([dirname]));
+    const channel = group.watches.find((watch) => watch.filename === dirname)?.channel;
+    assert.notEqual(channel, undefined);
 
-    await fs.writeFile(filename, 'initial');
-    {
-      group.open();
-      await fs.writeFile(filename, 'changed');
-      await pause();
-      await fs.writeFile(filename, 'changed again');
-      ac.abort();
-      await group.close();
-    }
-    await pause();
-    await fs.writeFile(filename, 'changed again again');
+    const messages: Message[] = [];
 
-    assert.deepStrictEqual(events, [
-      [dirname, { eventType: 'change', filename: path.basename(filename) }],
-      [dirname, { eventType: 'change', filename: path.basename(filename) }],
+    const channelConsumer = (async () => {
+      for await (const message of channel!.receive()) {
+        console.log('Received message', message);
+        if (message === undefined) {
+          continue;
+        }
+        messages.push(message);
+      }
+    })();
+
+    group.open();
+
+    await fs.writeFile(filename, 'changed');
+
+    channel?.close();
+    await channelConsumer;
+    ac.abort();
+    await group.close();
+
+    console.log('Messages', messages);
+
+    assert.deepStrictEqual(messages, [
+      { filename: dirname, event: { eventType: 'change', filename: path.basename(filename) } },
     ]);
   });
 });

@@ -6,12 +6,6 @@ import { describe, it, before, after } from 'node:test';
 
 import { Input, Output, hash } from '../src/build.js';
 
-import { sleep } from './common.js';
-
-const kSleepDuration = 100;
-
-const pause = sleep.bind(null, kSleepDuration);
-
 describe('Output', () => {
   let ac: AbortController;
   let dirname: string;
@@ -42,6 +36,15 @@ describe('Output', () => {
     const helloLeaf = Input.of(hello, signal);
     const worldLeaf = Input.of(world, signal);
 
+    const helloNotificationsConsumer = (async () => {
+      for await (const filename of helloLeaf.notifications.receive()) {
+        console.log('Rebuild initiated by', filename, 'is complete');
+        if (filename === hello) {
+          break;
+        }
+      }
+    })();
+
     const helloHash = await helloLeaf.value;
     const worldHash = await worldLeaf.value;
     assert.strictEqual(helloHash, hash(helloContents));
@@ -69,7 +72,7 @@ describe('Output', () => {
     assert.strictEqual(outContents.toString(), 'Hello, world!');
 
     await fs.writeFile(hello, 'Goodbye, ');
-    await pause();
+    await helloNotificationsConsumer;
 
     const outHashUpdated = await outTarget.value;
     const outContentsUpdated = await fs.readFile(out);
@@ -77,6 +80,7 @@ describe('Output', () => {
     assert.strictEqual(outContentsUpdated.toString(), 'Goodbye, world!');
     assert.notStrictEqual(outHash, outHashUpdated);
 
+    helloLeaf.notifications.close();
     ac.abort();
     await Promise.all([helloLeaf.watcher, worldLeaf.watcher]);
   });

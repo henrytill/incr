@@ -1,7 +1,22 @@
 import { PathLike } from 'node:fs';
 import fs, { FileChangeInfo } from 'node:fs/promises';
 
-export type WatchFunction<A> = (filename: PathLike, event: FileChangeInfo<string>) => Promise<A>;
+import { Channel } from './channel.js';
+
+export type Message = {
+  filename: PathLike;
+  event: FileChangeInfo<string>;
+};
+
+type Watch = {
+  filename: PathLike;
+  channel: Channel<Message>;
+  watcher?: Promise<void>;
+};
+
+function isWatched(group: WatchGroup, filename: PathLike): boolean {
+  return group.watches.find((watch) => watch.filename === filename) !== undefined;
+}
 
 /**
  * Implements leading-edge debounce on an asynchronous event stream.
@@ -17,16 +32,16 @@ export async function* debounce<T>(events: AsyncIterable<T>, delay: number): Asy
   }
 }
 
-export async function watch(
-  filename: PathLike,
+async function makeWatcher(
+  input: Pick<Watch, 'filename' | 'channel'>,
   signal: AbortSignal,
-  f: WatchFunction<void>,
 ): Promise<void> {
+  const { filename, channel } = input;
   try {
     const watcher = fs.watch(filename, { signal });
     console.debug('Watching for changes to', filename);
     for await (const event of debounce(watcher, 1000)) {
-      await f(filename, event);
+      channel.send({ filename, event });
     }
   } catch (err: any) {
     if (err.name === 'AbortError') {
@@ -38,31 +53,29 @@ export async function watch(
 }
 
 export class WatchGroup {
-  readonly watched: Set<PathLike> = new Set();
-
-  private pending: Promise<void>[] = [];
+  readonly watches: Watch[] = [];
 
   private signal: AbortSignal;
 
-  private f: WatchFunction<void>;
-
-  constructor(signal: AbortSignal, f: WatchFunction<void>) {
+  constructor(signal: AbortSignal) {
     this.signal = signal;
-    this.f = f;
   }
 
   add(filename: PathLike): void {
-    if (this.watched.has(filename)) return;
-    this.watched.add(filename);
+    if (isWatched(this, filename)) {
+      return;
+    }
+    const channel: Channel<Message> = new Channel();
+    this.watches.push({ filename, channel });
   }
 
   open(): void {
-    for (const filename of this.watched) {
-      this.pending.push(watch(filename, this.signal, this.f));
+    for (const w of this.watches) {
+      w.watcher = makeWatcher(w, this.signal);
     }
   }
 
   async close(): Promise<void> {
-    await Promise.all(this.pending);
+    await Promise.all(this.watches.map((watch) => watch.watcher));
   }
 }
