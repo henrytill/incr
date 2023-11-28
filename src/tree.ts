@@ -117,3 +117,13 @@ export class Computable<A> {
     return ret;
   }
 }
+
+export class AutoComputable<A> extends Computable<A> {
+  override update(): void {
+    super.update();
+    if (this.parents.length === 0) {
+      console.debug('Rebuilding', this.key);
+      this.compute();
+    }
+  }
+}

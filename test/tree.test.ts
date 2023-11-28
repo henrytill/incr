@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import test from 'node:test';
 
-import { NodeVisitor, Cell, Computable } from '../src/tree.js';
+import { NodeVisitor, Cell, Computable, AutoComputable } from '../src/tree.js';
 
 test('basic', () => {
   let count = 0;
@@ -77,4 +77,25 @@ test('compound', () => {
   assert.strictEqual(x.shouldRebuild, false);
   assert.strictEqual(v.shouldRebuild, true);
   assert.strictEqual(v.compute().value, 'hello: x is 6');
+});
+
+test('auto', () => {
+  let count = 0;
+
+  const z = new Cell(3);
+  const y = new Cell(2);
+  const x = new AutoComputable([y, z], function (a, b): number {
+    count += 1;
+    return a.value + b.value;
+  }).compute();
+  const w = new Cell(4);
+  const v = new AutoComputable([w, x], (a, b) => a.value + b.value).compute();
+
+  assert.strictEqual(v.value, 9);
+  assert.strictEqual(count, 1);
+
+  w.value = 5;
+
+  assert.strictEqual(v.value, 10);
+  assert.strictEqual(count, 1);
 });
