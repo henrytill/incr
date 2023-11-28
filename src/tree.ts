@@ -51,6 +51,12 @@ export class Cell<A> {
   accept<B>(visitor: NodeVisitor<A, B>): B {
     return visitor.visitCell(this);
   }
+
+  map<B>(f: (a: A) => B, key?: string): Computable<B> {
+    const ret = new Computable([this], (a) => f(a.value), key);
+    this.parents.push(ret);
+    return ret;
+  }
 }
 
 /**
@@ -115,5 +121,11 @@ export class Computable<A> {
 
   accept<B>(visitor: NodeVisitor<A, B>): B {
     return visitor.visitComputable(this);
+  }
+
+  map<B>(f: (a: A | undefined) => B, key?: string): Computable<B> {
+    const ret = new Computable([this], (a) => f(a.value), key);
+    this.parents.push(ret);
+    return ret;
   }
 }
