@@ -3,7 +3,7 @@ import { PathLike } from 'node:fs';
 import fs from 'node:fs/promises';
 
 import { Channel } from './channel.js';
-import { Cell, Computable } from './tree.js';
+import { AsyncCell, AsyncComputable } from './async.js';
 import { debounce } from './watch.js';
 
 export type HashDigest = string;
@@ -70,7 +70,7 @@ async function watch(input: Input, signal: AbortSignal): Promise<void> {
   }
 }
 
-export class Input extends Cell<Promise<HashDigest>> {
+export class Input extends AsyncCell<HashDigest> {
   watcher: Promise<void>;
   notifications: Channel<string> = new Channel();
 
@@ -87,19 +87,6 @@ export class Input extends Cell<Promise<HashDigest>> {
     const ret = new Input(value, filename.toString(), signal);
     return ret;
   }
-
-  override set value(value: Promise<HashDigest>) {
-    this._value = Promise.all([this._value, value]).then(([curr, next]) => {
-      if (curr !== next) {
-        this.update();
-      }
-      return next;
-    });
-  }
-
-  override get value(): Promise<HashDigest> {
-    return super.value;
-  }
 }
 
-export class Target extends Computable<Promise<HashDigest>> {}
+export class Target extends AsyncComputable<HashDigest> {}
