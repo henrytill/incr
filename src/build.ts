@@ -3,29 +3,41 @@ import { PathLike } from 'node:fs';
 import fs from 'node:fs/promises';
 
 import { Channel } from './channel.js';
-import { NodeVisitor, Cell, Computable } from './tree.js';
+import { Cell, Computable } from './tree.js';
 import { debounce } from './watch.js';
 
 export type HashDigest = string;
 
-type BuildVisitor<A> = NodeVisitor<Promise<HashDigest>, A>;
+type BuildTree = Input | Target;
 
-const findRootsVisitor: BuildVisitor<Target[]> = {
-  visitCell: (node) => {
-    if (node.parents.length === 0) {
-      return [];
-    } else {
-      return node.parents.flatMap((parent) => parent.accept(findRootsVisitor));
+function findRoots(input: Input): Target[] {
+  if (input.parents.length === 0) {
+    return [];
+  }
+
+  const ret: Target[] = [];
+  const stack: BuildTree[] = [input];
+  const visited = new Set<BuildTree>();
+
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (node === undefined) {
+      throw new Error('Unexpected undefined node');
     }
-  },
-  visitComputable: (node) => {
-    if (node.parents.length === 0) {
-      return [node];
-    } else {
-      return node.parents.flatMap((parent) => parent.accept(findRootsVisitor));
+    if (visited.has(node)) {
+      continue;
     }
-  },
-};
+    visited.add(node);
+    if (node instanceof Target && node.parents.length === 0) {
+      ret.push(node);
+      continue;
+    }
+    const unvisited = node.parents.filter((parent) => !visited.has(parent));
+    stack.push(...unvisited);
+  }
+
+  return ret;
+}
 
 export function hash(input: BinaryLike): HashDigest {
   const hash = crypto.createHash('sha256');
@@ -42,7 +54,7 @@ async function watch(input: Input, signal: AbortSignal): Promise<void> {
       input.value = fs.readFile(filename).then(hash);
       console.debug('Updating', filename);
       await input.value;
-      const roots = input.accept(findRootsVisitor);
+      const roots = findRoots(input);
       console.debug('Rebuilding', roots.map((root) => root.key).join(', '));
       for (const root of roots) {
         root.compute();
