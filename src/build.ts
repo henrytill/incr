@@ -2,9 +2,9 @@ import crypto, { BinaryLike } from 'node:crypto';
 import { PathLike } from 'node:fs';
 import fs from 'node:fs/promises';
 
-import { findRoots } from './core.js';
-import { Channel } from './channel.js';
 import { AsyncCell, AsyncComputable } from './async.js';
+import { Channel } from './channel.js';
+import { findRoots } from './core.js';
 import { debounce } from './watch.js';
 
 export type HashDigest = string;
