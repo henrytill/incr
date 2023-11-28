@@ -3,10 +3,29 @@ import { PathLike } from 'node:fs';
 import fs from 'node:fs/promises';
 
 import { Channel } from './channel.js';
-import { Leaf, Target } from './tree.js';
+import { DependencyVisitor, Leaf, Target } from './tree.js';
 import { debounce } from './watch.js';
 
 export type HashDigest = string;
+
+type BuildVisitor<A> = DependencyVisitor<Promise<HashDigest>, A>;
+
+const findRootsVisitor: BuildVisitor<Output[]> = {
+  leaf: (input) => {
+    if (input.parents.length === 0) {
+      return [];
+    } else {
+      return input.parents.flatMap((parent) => parent.accept(findRootsVisitor));
+    }
+  },
+  target: (output) => {
+    if (output.parents.length === 0) {
+      return [output];
+    } else {
+      return output.parents.flatMap((parent) => parent.accept(findRootsVisitor));
+    }
+  },
+};
 
 export function hash(input: BinaryLike): HashDigest {
   const hash = crypto.createHash('sha256');
@@ -23,6 +42,11 @@ async function watch(input: Input, signal: AbortSignal): Promise<void> {
       input.value = fs.readFile(filename).then(hash);
       console.debug('Updating', filename);
       await input.value;
+      const roots = input.accept(findRootsVisitor);
+      console.debug('Rebuilding', roots.map((root) => root.key).join(', '));
+      for (const root of roots) {
+        root.build();
+      }
       input.notifications.send(filename);
     }
   } catch (err: any) {
@@ -66,12 +90,4 @@ export class Input extends Leaf<Promise<HashDigest>> {
   }
 }
 
-export class Output extends Target<Promise<HashDigest>> {
-  override update(): void {
-    super.update();
-    if (this.parents.length === 0) {
-      console.debug('Rebuilding', this.key);
-      this.build();
-    }
-  }
-}
+export class Output extends Target<Promise<HashDigest>> {}
