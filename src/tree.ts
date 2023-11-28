@@ -38,10 +38,6 @@ export class Cell<A> {
     this.update();
   }
 
-  addParents(...parents: Computable<any>[]): void {
-    this.parents.push(...parents);
-  }
-
   update(): void {
     for (const parent of this.parents) {
       parent.update();
@@ -84,20 +80,12 @@ export class Computable<A> {
     this.key = key ?? crypto.randomUUID();
 
     for (const child of this.children) {
-      child.addParents(this);
+      child.parents.push(this);
     }
   }
 
   get value(): A | undefined {
     return this._value;
-  }
-
-  addParents(...parents: Computable<any>[]): void {
-    this.parents.push(...parents);
-  }
-
-  addChildren(...children: Node<any>[]): void {
-    this.children.push(...children);
   }
 
   compute(): Computable<A> {
