@@ -16,6 +16,7 @@
     "clean": "rm -rf dist",
     "prepare": "tsc",
     "lint": "eslint src/*.ts test/*.ts",
+    "fmt": "prettier --write src test",
     "build": "tsc",
     "start": "tsc -w",
     "pretest": "tsc",
@@ -26,6 +27,7 @@
     "@typescript-eslint/eslint-plugin": "^6.12.0",
     "@typescript-eslint/parser": "^6.12.0",
     "eslint": "^8.54.0",
+    "prettier": "^3.1.0",
     "typescript": "^5.3.2"
   }
 }
