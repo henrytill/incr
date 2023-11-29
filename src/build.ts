@@ -26,7 +26,7 @@ async function watch(input: Input, signal: AbortSignal): Promise<void> {
       const roots = input.roots();
       console.debug('Rebuilding', roots.map((root) => root.key).join(', '));
       for (const root of roots) {
-        root.compute();
+        await root.compute().value;
       }
       input.notifications.send(filename);
     }
