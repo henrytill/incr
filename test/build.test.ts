@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, it, before, after } from 'node:test';
 
+import { AsyncCell } from '../src/async.js';
 import { Input, Target, hash } from '../src/build.js';
 
 describe('Output', () => {
@@ -83,5 +84,41 @@ describe('Output', () => {
     helloInput.notifications.close();
     ac.abort();
     await Promise.all([helloInput.watcher, worldInput.watcher]);
+  });
+
+  it('should build and rebuild a file from a non-file leaf node', async () => {
+    const json = path.join(dirname, 'out.json');
+
+    const contents = { tag: 'foo', value: 'Hello, world!' };
+
+    const cell = AsyncCell.resolve(contents);
+
+    const jsonFile = new Target([cell], async (a) => {
+      const contents = JSON.stringify(await a.value);
+      await fs.writeFile(json, contents);
+      return hash(contents);
+    }).compute();
+
+    const jsonFileHash = await jsonFile.value;
+
+    const jsonFileContents = await fs.readFile(json, 'utf8');
+    assert.strictEqual(hash(jsonFileContents), jsonFileHash);
+    assert.deepStrictEqual(JSON.parse(jsonFileContents), contents);
+
+    assert.strictEqual(jsonFile.shouldRebuild, false);
+
+    cell.value = cell.value.then((contents) => {
+      return { ...contents, value: 'Goodbye, world!' };
+    });
+
+    const contentsUpdated = await cell.value;
+
+    assert.strictEqual(jsonFile.shouldRebuild, true);
+
+    const jsonFileHashUpdated = await jsonFile.compute().value;
+
+    const jsonFileContentsUpdated = await fs.readFile(json, 'utf8');
+    assert.strictEqual(hash(jsonFileContentsUpdated), jsonFileHashUpdated);
+    assert.deepStrictEqual(JSON.parse(jsonFileContentsUpdated), contentsUpdated);
   });
 });
