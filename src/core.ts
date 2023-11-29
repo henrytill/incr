@@ -1,7 +1,5 @@
 import crypto from 'node:crypto';
 
-import { ignore } from './common.js';
-
 export type Node<A> = Cell<A> | Computable<A>;
 
 export type NodeVisitor<A, B> = {
@@ -17,7 +15,7 @@ export type ComputeFunction<A, B> = (...deps: Node<A>[]) => B | undefined;
  * The value of a leaf node is set by the user.
  */
 export class Cell<A> {
-  protected _value: A;
+  _value: A;
   readonly key: string;
   parents: Computable<any>[] = [];
 
@@ -37,9 +35,7 @@ export class Cell<A> {
   }
 
   update(): void {
-    for (const parent of this.parents) {
-      parent.update();
-    }
+    return doUpdate(this);
   }
 
   accept<B>(visitor: NodeVisitor<A, B>): B {
@@ -64,7 +60,7 @@ export class Cell<A> {
  * node's children as input.
  */
 export class Computable<A> {
-  private _value?: A;
+  _value?: A;
   readonly key: string;
   parents: Computable<any>[] = [];
   children: Node<any>[];
@@ -85,22 +81,11 @@ export class Computable<A> {
   }
 
   compute(): Computable<A> {
-    for (const child of this.children) {
-      if (child instanceof Cell) continue;
-      ignore(child.compute());
-    }
-    if (this.shouldRebuild) {
-      this._value = this.builder(...this.children);
-      this.shouldRebuild = false;
-    }
-    return this;
+    return doCompute(this);
   }
 
   update(): void {
-    this.shouldRebuild = true;
-    for (const parent of this.parents) {
-      parent.update();
-    }
+    return doUpdate(this);
   }
 
   accept<B>(visitor: NodeVisitor<A, B>): B {
@@ -118,13 +103,51 @@ export class Computable<A> {
   }
 }
 
-export class AutoComputable<A> extends Computable<A> {
-  override update(): void {
-    super.update();
-    if (this.parents.length === 0) {
-      console.debug('Rebuilding', this.key);
-      this.compute();
+function doCompute(computable: Computable<any>): Computable<any> {
+  if (!computable.shouldRebuild) return computable;
+
+  const toCompute: Computable<any>[][] = [[computable]];
+  const computed: Set<Node<any>> = new Set();
+
+  const top = (): Computable<any>[] => toCompute[toCompute.length - 1];
+
+  while (top().length > 0) {
+    const nodes = top();
+    const computableChildren = nodes.flatMap((node) =>
+      node.children.filter((child) => child instanceof Computable && child.shouldRebuild),
+    ) as Computable<any>[];
+    toCompute.push(computableChildren);
+  }
+
+  while (toCompute.length > 0) {
+    const nodes = toCompute.pop();
+    if (nodes === undefined) throw new Error('Invariant violated');
+    if (nodes.length === 0) continue;
+    for (const node of nodes) {
+      if (computed.has(node)) continue;
+      node._value = node.builder(...node.children);
+      node.shouldRebuild = false;
+      computed.add(node);
     }
+  }
+
+  return computable;
+}
+
+function doUpdate(node: Node<any>): void {
+  const toUpdate: Node<any>[] = [node];
+  const updated: Set<Node<any>> = new Set();
+
+  while (toUpdate.length > 0) {
+    const node = toUpdate.pop();
+    if (node === undefined) throw new Error('Invariant violated');
+    if (updated.has(node)) continue;
+    if (node instanceof Computable) {
+      node.shouldRebuild = true;
+    }
+    updated.add(node);
+    const unvisited = node.parents.filter((parent) => !updated.has(parent));
+    toUpdate.push(...unvisited);
   }
 }
 
@@ -133,7 +156,7 @@ function findRoots(input: Node<any>): Computable<any>[] {
 
   const ret: Computable<any>[] = [];
   const stack: Node<any>[] = [input];
-  const visited = new Set<Node<any>>();
+  const visited: Set<Node<any>> = new Set();
 
   while (stack.length > 0) {
     const node = stack.pop();
@@ -149,4 +172,28 @@ function findRoots(input: Node<any>): Computable<any>[] {
   }
 
   return ret;
+}
+
+export class AutoCell<A> extends Cell<A> {
+  override update(): void {
+    return doAutoUpdate(this);
+  }
+}
+
+function doAutoUpdate(node: Node<any>): void {
+  const toUpdate: Node<any>[] = [node];
+  const updated: Set<Node<any>> = new Set();
+
+  while (toUpdate.length > 0) {
+    const node = toUpdate.pop();
+    if (node === undefined) throw new Error('Invariant violated');
+    if (updated.has(node)) continue;
+    if (node instanceof Computable) {
+      node._value = node.builder(...node.children);
+      node.shouldRebuild = false;
+    }
+    updated.add(node);
+    const unvisited = node.parents.filter((parent) => !updated.has(parent));
+    toUpdate.push(...unvisited);
+  }
 }

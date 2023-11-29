@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import test from 'node:test';
 
-import { NodeVisitor, Cell, Computable, AutoComputable } from '../src/core.js';
+import { NodeVisitor, Cell, Computable, AutoCell } from '../src/core.js';
 
 test('basic', () => {
   let count = 0;
@@ -82,14 +82,14 @@ test('compound', () => {
 test('auto', () => {
   let count = 0;
 
-  const z = new Cell(3);
-  const y = new Cell(2);
-  const x = new AutoComputable([y, z], function (a, b): number {
+  const z = new AutoCell(3);
+  const y = new AutoCell(2);
+  const x = new Computable([y, z], function (a, b): number {
     count += 1;
     return a.value + b.value;
   }).compute();
-  const w = new Cell(4);
-  const v = new AutoComputable([w, x], (a, b) => a.value + b.value).compute();
+  const w = new AutoCell(4);
+  const v = new Computable([w, x], (a, b) => a.value + b.value).compute();
 
   assert.strictEqual(v.value, 9);
   assert.strictEqual(count, 1);
