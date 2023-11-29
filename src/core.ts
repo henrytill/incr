@@ -75,7 +75,6 @@ export class Computable<A> {
     this.children = children;
     this.builder = builder;
     this.key = key ?? crypto.randomUUID();
-
     for (const child of this.children) {
       child.parents.push(this);
     }
@@ -138,7 +137,7 @@ function findRoots(input: Node<any>): Computable<any>[] {
 
   while (stack.length > 0) {
     const node = stack.pop();
-    if (node === undefined) throw new Error('Unexpected undefined node');
+    if (node === undefined) throw new Error('Invariant violated');
     if (visited.has(node)) continue;
     visited.add(node);
     if (node instanceof Computable && node.parents.length === 0) {

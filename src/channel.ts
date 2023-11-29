@@ -31,7 +31,6 @@ export class Channel<T> {
   close() {
     if (!this.running) return;
     this.running = false;
-    // Drain the resolve queue.
     while (this.resolveQueue.length > 0) {
       this.resolveQueue.shift()?.call(null, undefined);
     }
