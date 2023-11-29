@@ -18,9 +18,7 @@ export type ComputeFunction<A, B> = (...deps: Node<A>[]) => B | undefined;
  */
 export class Cell<A> {
   protected _value: A;
-
   readonly key: string;
-
   parents: Computable<any>[] = [];
 
   constructor(value: A, key?: string) {
@@ -67,16 +65,11 @@ export class Cell<A> {
  */
 export class Computable<A> {
   private _value?: A;
-
   readonly key: string;
-
   parents: Computable<any>[] = [];
-
   children: Node<any>[];
-
   builder: ComputeFunction<any, A>;
-
-  shouldRebuild = true;
+  shouldRebuild: boolean = true;
 
   constructor(children: Node<any>[], builder: ComputeFunction<any, A>, key?: string) {
     this.children = children;
