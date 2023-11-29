@@ -1,6 +1,10 @@
 import { Cell, Computable } from './core.js';
 
 export class AsyncCell<T> extends Cell<Promise<T>> {
+  static resolve<T>(value: T, key?: string): AsyncCell<T> {
+    return new AsyncCell(Promise.resolve(value), key);
+  }
+
   override set value(value: Promise<T>) {
     this._value = Promise.all([this._value, value]).then(([curr, next]) => {
       if (curr !== next) {
@@ -20,6 +24,10 @@ export class AsyncComputable<T> extends Computable<Promise<T>> {}
 export class AsyncAutoCell<T> extends Cell<Promise<T>> {
   constructor(value: Promise<T>, key?: string) {
     super(value, key);
+  }
+
+  static resolve<T>(value: T, key?: string): AsyncCell<T> {
+    return new AsyncAutoCell(Promise.resolve(value), key);
   }
 
   override set value(value: Promise<T>) {

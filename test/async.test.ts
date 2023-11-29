@@ -4,8 +4,8 @@ import test from 'node:test';
 import { AsyncAutoCell, AsyncComputable } from '../src/async.js';
 
 test('AsyncAutoCell', async () => {
-  const x = new AsyncAutoCell(Promise.resolve(1));
-  const y = new AsyncAutoCell(Promise.resolve(2));
+  const x = AsyncAutoCell.resolve(1);
+  const y = AsyncAutoCell.resolve(2);
 
   const z = new AsyncComputable([x, y], async (a, b) => {
     const [x, y] = await Promise.all([a.value, b.value]);
