@@ -23,11 +23,9 @@ async function watch(input: Input, signal: AbortSignal): Promise<void> {
       input.value = fs.readFile(filename).then(hash);
       console.debug('Updating', filename);
       await input.value;
-      const roots = input.roots();
+      const roots = input.roots(); // TODO: combine with update()
       console.debug('Rebuilding', roots.map((root) => root.key).join(', '));
-      for (const root of roots) {
-        await root.compute().value;
-      }
+      await Promise.all(roots.map((root) => root.compute().value));
       input.notifications.send(filename);
     }
   } catch (err: any) {

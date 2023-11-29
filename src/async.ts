@@ -20,10 +20,6 @@ export class AsyncCell<T> extends Cell<Promise<T>> {
 export class AsyncComputable<T> extends Computable<Promise<T>> {}
 
 export class AsyncAutoCell<T> extends Cell<Promise<T>> {
-  constructor(value: Promise<T>, key?: string) {
-    super(value, key);
-  }
-
   static resolve<T>(value: T, key?: string): AsyncCell<T> {
     return new AsyncAutoCell(Promise.resolve(value), key);
   }
@@ -33,7 +29,7 @@ export class AsyncAutoCell<T> extends Cell<Promise<T>> {
       if (curr === next) return next;
       this._value = Promise.resolve(next);
       this.update();
-      const roots = this.roots();
+      const roots = this.roots(); // TODO: combine with update()
       console.debug('Rebuilding', roots.map((root) => root.key).join(', '));
       return Promise.all(roots.map((root) => root.compute().value)).then(() => this._value);
     });
