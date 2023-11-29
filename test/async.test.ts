@@ -1,21 +1,56 @@
 import assert from 'node:assert';
 import test from 'node:test';
 
-import { AsyncAutoCell, AsyncComputable } from '../src/async.js';
+import { AsyncCell, AsyncAutoCell, AsyncComputable } from '../src/async.js';
+
+test('AsyncCell', async () => {
+  const z = AsyncCell.resolve(1);
+  const y = AsyncCell.resolve(2);
+
+  const x = new AsyncComputable([y, z], async (a, b) => {
+    return await Promise.all([a.value, b.value]).then(([x, y]) => x + y);
+  });
+
+  const w = AsyncCell.resolve(3);
+  const v = new AsyncComputable([w, x], async (a, b) => {
+    return await Promise.all([a.value, b.value]).then(([x, y]) => x + y);
+  });
+
+  const u = AsyncCell.resolve(4);
+  const t = new AsyncComputable([u, v], async (a, b) => {
+    return await Promise.all([a.value, b.value]).then(([x, y]) => x + y);
+  });
+
+  assert.strictEqual(await t.compute().value, 10);
+
+  z.value = Promise.resolve(2);
+  await z.value;
+
+  assert.strictEqual(await t.compute().value, 11);
+});
 
 test('AsyncAutoCell', async () => {
-  const x = AsyncAutoCell.resolve(1);
+  const z = AsyncAutoCell.resolve(1);
   const y = AsyncAutoCell.resolve(2);
 
-  const z = new AsyncComputable([x, y], async (a, b) => {
-    const [x, y] = await Promise.all([a.value, b.value]);
-    return x + y;
-  }).compute();
+  const x = new AsyncComputable([y, z], async (a, b) => {
+    return await Promise.all([a.value, b.value]).then(([x, y]) => x + y);
+  });
 
-  assert.strictEqual(await z.value, 3);
+  const w = AsyncAutoCell.resolve(3);
+  const v = new AsyncComputable([w, x], async (a, b) => {
+    return await Promise.all([a.value, b.value]).then(([x, y]) => x + y);
+  });
 
-  x.value = Promise.resolve(2);
-  await x.value;
+  const u = AsyncAutoCell.resolve(4);
+  const t = new AsyncComputable([u, v], async (a, b) => {
+    return await Promise.all([a.value, b.value]).then(([x, y]) => x + y);
+  });
 
-  assert.strictEqual(await z.value, 4);
+  assert.strictEqual(await t.compute().value, 10);
+
+  z.value = Promise.resolve(2);
+  await z.value;
+
+  assert.strictEqual(await t.value, 11);
 });
