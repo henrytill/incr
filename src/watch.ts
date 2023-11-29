@@ -61,9 +61,7 @@ export class WatchGroup {
   }
 
   add(filename: PathLike): void {
-    if (isWatched(this, filename)) {
-      return;
-    }
+    if (isWatched(this, filename)) return;
     const channel: Channel<Message> = new Channel();
     this.watches.push({ filename, channel });
   }

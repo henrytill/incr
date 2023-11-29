@@ -33,12 +33,10 @@ describe('WatchGroup', () => {
 
     const messages: Message[] = [];
 
-    const channelConsumer = (async () => {
+    const consumer = (async () => {
       for await (const message of channel!.receive()) {
         console.log('Received message', message);
-        if (message === undefined) {
-          continue;
-        }
+        if (message === undefined) continue;
         messages.push(message);
       }
     })();
@@ -48,7 +46,7 @@ describe('WatchGroup', () => {
     await fs.writeFile(filename, 'changed');
 
     channel?.close();
-    await channelConsumer;
+    await consumer;
     ac.abort();
     await group.close();
 

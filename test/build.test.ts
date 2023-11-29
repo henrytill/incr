@@ -37,12 +37,10 @@ describe('Output', () => {
     const helloInput = Input.of(hello, signal);
     const worldInput = Input.of(world, signal);
 
-    const helloNotificationsConsumer = (async () => {
+    const consumer = (async () => {
       for await (const filename of helloInput.notifications.receive()) {
         console.log('Rebuild initiated by', filename, 'is complete');
-        if (filename === hello) {
-          break;
-        }
+        if (filename === hello) break;
       }
     })();
 
@@ -73,7 +71,7 @@ describe('Output', () => {
     assert.strictEqual(outContents.toString(), 'Hello, world!');
 
     await fs.writeFile(hello, 'Goodbye, ');
-    await helloNotificationsConsumer;
+    await consumer;
 
     const outHashUpdated = await outTarget.value;
     const outContentsUpdated = await fs.readFile(out);

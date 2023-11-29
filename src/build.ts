@@ -49,9 +49,7 @@ export class Input extends AsyncCell<HashDigest> {
   }
 
   static of(filename: PathLike, signal: AbortSignal): Input {
-    if (typeof filename !== 'string') {
-      throw new TypeError('filename must be a string');
-    }
+    if (typeof filename !== 'string') throw new TypeError('filename must be a string');
     const value = fs.readFile(filename).then(hash);
     const ret = new Input(value, filename.toString(), signal);
     return ret;
