@@ -15,8 +15,6 @@ export type ComputeFunction<A, B> = (...deps: Node<A>[]) => B | undefined;
  * The value of a leaf node is set by the user.
  */
 export class Cell<A> {
-  readonly tag = 'Cell';
-
   parents: Computable<any>[] = [];
 
   constructor(
@@ -60,8 +58,6 @@ export class Cell<A> {
  * node's children as input.
  */
 export class Computable<A> {
-  readonly tag = 'Computable';
-
   value_?: A;
   parents: Computable<any>[] = [];
   shouldRebuild: boolean = true;
