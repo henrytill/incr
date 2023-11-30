@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, it, before, after } from 'node:test';
 
-import { Input, Target, hash } from '../src/build.js';
+import { AutoInput, Input, Target, hash } from '../src/build.js';
 import { Cell } from '../src/core.js';
 
 describe('Output', () => {
@@ -113,5 +113,79 @@ describe('Output', () => {
     const jsonFileContentsUpdated = await fs.readFile(json, 'utf8');
     assert.strictEqual(hash(jsonFileContentsUpdated), jsonFileHashUpdated);
     assert.deepStrictEqual(JSON.parse(jsonFileContentsUpdated), cell.value);
+  });
+});
+
+describe('AutoInput', () => {
+  let ac: AbortController;
+  let dirname: string;
+
+  before(async () => {
+    ac = new AbortController();
+    dirname = await fs.mkdtemp(path.join(os.tmpdir(), 'incr-build-test-'));
+  });
+
+  after(async () => {
+    ac.abort();
+    await fs.rm(dirname, { recursive: true });
+  });
+
+  it('should build and rebuild a file automatically', async () => {
+    const hello = path.join(dirname, 'hello.txt');
+    const world = path.join(dirname, 'world.txt');
+    const out = path.join(dirname, 'out.txt');
+
+    const helloContents = 'Hello, ';
+    const worldContents = 'world!';
+
+    await fs.writeFile(hello, helloContents);
+    await fs.writeFile(world, worldContents);
+
+    const { signal } = ac;
+
+    const helloInput = await AutoInput.of(hello, signal);
+    const worldInput = await AutoInput.of(world, signal);
+
+    const consumer = (async () => {
+      for await (const message of helloInput.notifications.receive()) {
+        if (message?.filename === hello) break;
+      }
+      return true;
+    })();
+
+    assert.strictEqual(helloInput.value, hash(helloContents));
+    assert.strictEqual(worldInput.value, hash(worldContents));
+
+    const outTarget = new Target(
+      [helloInput, worldInput],
+      async (a, b) => {
+        const helloContents = await fs.readFile(a.key);
+        const worldContents = await fs.readFile(b.key);
+        const contents = `${helloContents}${worldContents}`;
+        await fs.writeFile(out, contents);
+        return hash(contents);
+      },
+      out,
+    ).compute();
+
+    const outHash = await outTarget.value;
+    const outContents = await fs.readFile(outTarget.key);
+    assert.strictEqual(hash(outContents), outHash);
+    assert.strictEqual(outContents.toString(), 'Hello, world!');
+    assert.strictEqual(helloInput.value, hash(helloContents));
+
+    const goodbye = 'Goodbye, ';
+
+    await fs.writeFile(hello, goodbye);
+    const received = await consumer;
+    assert.ok(received);
+
+    assert.strictEqual(helloInput.value, hash(goodbye));
+
+    const outHashUpdated = await outTarget.value;
+    const outContentsUpdated = await fs.readFile(outTarget.key);
+    assert.strictEqual(hash(outContentsUpdated), outHashUpdated);
+    assert.strictEqual(outContentsUpdated.toString(), 'Goodbye, world!');
+    assert.notStrictEqual(outHash, outHashUpdated);
   });
 });

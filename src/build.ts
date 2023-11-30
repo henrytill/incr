@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 
 import { Channel } from './channel.js';
 import { debounce, Message } from './watch.js';
-import { AsyncComputable, Cell } from './core.js';
+import { AsyncComputable, AutoCell, Cell } from './core.js';
 
 export type HashDigest = string;
 
@@ -42,6 +42,22 @@ export class Input extends Cell<HashDigest> {
   static async of(filename: PathLike, signal: AbortSignal): Promise<Input> {
     const value = await fs.readFile(filename).then(hash);
     const ret = new Input(value, filename.toString(), signal);
+    return ret;
+  }
+}
+
+export class AutoInput extends AutoCell<HashDigest> {
+  watcher: Promise<void>;
+  notifications: Channel<Message> = new Channel();
+
+  private constructor(value: HashDigest, key: string, signal: AbortSignal) {
+    super(value, key);
+    this.watcher = watch(this, signal);
+  }
+
+  static async of(filename: PathLike, signal: AbortSignal): Promise<AutoInput> {
+    const value = await fs.readFile(filename).then(hash);
+    const ret = new AutoInput(value, filename.toString(), signal);
     return ret;
   }
 }
