@@ -201,3 +201,5 @@ function doAutoUpdate(node: Node<any>): void {
     toUpdate.push(...unvisited);
   }
 }
+
+export class AsyncComputable<T> extends Computable<Promise<T>> {}

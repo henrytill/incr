@@ -2,10 +2,9 @@ import crypto, { BinaryLike } from 'node:crypto';
 import { PathLike } from 'node:fs';
 import fs from 'node:fs/promises';
 
-import { AsyncComputable } from './async.js';
 import { Channel } from './channel.js';
 import { debounce, Message } from './watch.js';
-import { Cell } from './core.js';
+import { AsyncComputable, Cell } from './core.js';
 
 export type HashDigest = string;
 
