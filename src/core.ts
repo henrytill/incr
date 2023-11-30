@@ -20,17 +20,17 @@ export class Cell<A> {
   parents: Computable<any>[] = [];
 
   constructor(
-    public _value: A,
+    public value_: A,
     readonly key: string = crypto.randomUUID(),
   ) {}
 
   get value(): A {
-    return this._value;
+    return this.value_;
   }
 
   set value(value: A) {
-    if (value === this._value) return;
-    this._value = value;
+    if (value === this.value_) return;
+    this.value_ = value;
     this.update();
   }
 
@@ -62,7 +62,7 @@ export class Cell<A> {
 export class Computable<A> {
   readonly tag = 'Computable';
 
-  _value?: A;
+  value_?: A;
   parents: Computable<any>[] = [];
   shouldRebuild: boolean = true;
 
@@ -77,7 +77,7 @@ export class Computable<A> {
   }
 
   get value(): A | undefined {
-    return this._value;
+    return this.value_;
   }
 
   compute(): Computable<A> {
@@ -125,7 +125,7 @@ function doCompute(computable: Computable<any>): Computable<any> {
     if (nodes.length === 0) continue;
     for (const node of nodes) {
       if (computed.has(node)) continue;
-      node._value = node.builder(...node.children);
+      node.value_ = node.builder(...node.children);
       node.shouldRebuild = false;
       computed.add(node);
     }
@@ -189,7 +189,7 @@ function doAutoUpdate(node: Node<any>): void {
     if (node === undefined) throw new Error('Invariant violated');
     if (updated.has(node)) continue;
     if (node instanceof Computable) {
-      node._value = node.builder(...node.children);
+      node.value_ = node.builder(...node.children);
       node.shouldRebuild = false;
     }
     updated.add(node);
