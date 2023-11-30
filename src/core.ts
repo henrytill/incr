@@ -17,14 +17,12 @@ export type ComputeFunction<A, B> = (...deps: Node<A>[]) => B | undefined;
 export class Cell<A> {
   readonly tag = 'Cell';
 
-  _value: A;
-  readonly key: string;
   parents: Computable<any>[] = [];
 
-  constructor(value: A, key?: string) {
-    this._value = value;
-    this.key = key ?? crypto.randomUUID();
-  }
+  constructor(
+    public _value: A,
+    readonly key: string = crypto.randomUUID(),
+  ) {}
 
   get value(): A {
     return this._value;
@@ -65,16 +63,14 @@ export class Computable<A> {
   readonly tag = 'Computable';
 
   _value?: A;
-  readonly key: string;
   parents: Computable<any>[] = [];
-  children: Node<any>[];
-  builder: ComputeFunction<any, A>;
   shouldRebuild: boolean = true;
 
-  constructor(children: Node<any>[], builder: ComputeFunction<any, A>, key?: string) {
-    this.children = children;
-    this.builder = builder;
-    this.key = key ?? crypto.randomUUID();
+  constructor(
+    public children: Node<any>[],
+    public builder: ComputeFunction<any, A>,
+    readonly key: string = crypto.randomUUID(),
+  ) {
     for (const child of this.children) {
       child.parents.push(this);
     }

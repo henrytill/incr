@@ -46,12 +46,9 @@ async function watch(input: WatchInput, signal: AbortSignal): Promise<void> {
 }
 
 export class WatchGroup {
-  private signal: AbortSignal;
   readonly watches: Watch[] = [];
 
-  constructor(signal: AbortSignal) {
-    this.signal = signal;
-  }
+  constructor(private signal: AbortSignal) {}
 
   add(filename: PathLike): void {
     if (isWatched(this, filename)) return;
