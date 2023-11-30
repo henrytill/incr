@@ -2,9 +2,10 @@ import crypto, { BinaryLike } from 'node:crypto';
 import { PathLike } from 'node:fs';
 import fs from 'node:fs/promises';
 
-import { AsyncCell, AsyncComputable } from './async.js';
+import { AsyncComputable } from './async.js';
 import { Channel } from './channel.js';
-import { debounce } from './watch.js';
+import { debounce, Message } from './watch.js';
+import { Cell } from './core.js';
 
 export type HashDigest = string;
 
@@ -18,12 +19,9 @@ async function watch(input: Input, signal: AbortSignal): Promise<void> {
   const filename = input.key;
   try {
     const watcher = fs.watch(filename, { signal });
-    for await (const _event of debounce(watcher, 1000)) {
-      input.value = fs.readFile(filename).then(hash);
-      await input.value;
-      const roots = input.roots(); // TODO: combine with update()
-      await Promise.all(roots.map((root) => root.compute().value));
-      input.notifications.send(filename);
+    for await (const event of debounce(watcher, 1000)) {
+      input.value = await fs.readFile(filename).then(hash);
+      input.notifications.send({ filename, event });
     }
   } catch (err: any) {
     if (err.name === 'AbortError') {
@@ -33,18 +31,18 @@ async function watch(input: Input, signal: AbortSignal): Promise<void> {
   }
 }
 
-export class Input extends AsyncCell<HashDigest> {
+export class Input extends Cell<HashDigest> {
   watcher: Promise<void>;
-  notifications: Channel<string> = new Channel();
+  notifications: Channel<Message> = new Channel();
 
-  private constructor(value: Promise<HashDigest>, key: string, signal: AbortSignal) {
+  private constructor(value: HashDigest, key: string, signal: AbortSignal) {
     super(value, key);
     this.watcher = watch(this, signal);
   }
 
-  static of(filename: PathLike, signal: AbortSignal): Input {
+  static async of(filename: PathLike, signal: AbortSignal): Promise<Input> {
     if (typeof filename !== 'string') throw new TypeError('filename must be a string');
-    const value = fs.readFile(filename).then(hash);
+    const value = await fs.readFile(filename).then(hash);
     const ret = new Input(value, filename.toString(), signal);
     return ret;
   }

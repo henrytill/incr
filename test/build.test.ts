@@ -4,8 +4,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, it, before, after } from 'node:test';
 
-import { AsyncCell } from '../src/async.js';
 import { Input, Target, hash } from '../src/build.js';
+import { Cell } from '../src/core.js';
 
 describe('Output', () => {
   let ac: AbortController;
@@ -34,19 +34,18 @@ describe('Output', () => {
 
     const { signal } = ac;
 
-    const helloInput = Input.of(hello, signal);
-    const worldInput = Input.of(world, signal);
+    const helloInput = await Input.of(hello, signal);
+    const worldInput = await Input.of(world, signal);
 
     const consumer = (async () => {
-      for await (const filename of helloInput.notifications.receive()) {
-        if (filename === hello) break;
+      for await (const message of helloInput.notifications.receive()) {
+        if (message?.filename === hello) break;
       }
+      return true;
     })();
 
-    const helloHash = await helloInput.value;
-    const worldHash = await worldInput.value;
-    assert.strictEqual(helloHash, hash(helloContents));
-    assert.strictEqual(worldHash, hash(worldContents));
+    assert.strictEqual(helloInput.value, hash(helloContents));
+    assert.strictEqual(worldInput.value, hash(worldContents));
 
     const outTarget = new Target(
       [helloInput, worldInput],
@@ -70,9 +69,10 @@ describe('Output', () => {
     assert.strictEqual(outContents.toString(), 'Hello, world!');
 
     await fs.writeFile(hello, 'Goodbye, ');
-    await consumer;
+    const received = await consumer;
+    assert.ok(received);
 
-    const outHashUpdated = await outTarget.value;
+    const outHashUpdated = await outTarget.compute().value;
     const outContentsUpdated = await fs.readFile(out);
     assert.strictEqual(hash(outContentsUpdated), outHashUpdated);
     assert.strictEqual(outContentsUpdated.toString(), 'Goodbye, world!');
@@ -88,7 +88,7 @@ describe('Output', () => {
 
     const contents = { tag: 'foo', value: 'Hello, world!' };
 
-    const cell = AsyncCell.resolve(contents);
+    const cell = new Cell(contents);
 
     const jsonFile = new Target([cell], async (a) => {
       const contents = JSON.stringify(await a.value);
@@ -104,11 +104,7 @@ describe('Output', () => {
 
     assert.strictEqual(jsonFile.shouldRebuild, false);
 
-    cell.value = cell.value.then((contents) => {
-      return { ...contents, value: 'Goodbye, world!' };
-    });
-
-    const contentsUpdated = await cell.value;
+    cell.value = { ...cell.value, value: 'Goodbye, world!' };
 
     assert.strictEqual(jsonFile.shouldRebuild, true);
 
@@ -116,6 +112,6 @@ describe('Output', () => {
 
     const jsonFileContentsUpdated = await fs.readFile(json, 'utf8');
     assert.strictEqual(hash(jsonFileContentsUpdated), jsonFileHashUpdated);
-    assert.deepStrictEqual(JSON.parse(jsonFileContentsUpdated), contentsUpdated);
+    assert.deepStrictEqual(JSON.parse(jsonFileContentsUpdated), cell.value);
   });
 });

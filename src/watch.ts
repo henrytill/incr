@@ -14,10 +14,6 @@ type Watch = {
   watcher?: Promise<void>;
 };
 
-function isWatched(group: WatchGroup, filename: PathLike): boolean {
-  return group.watches.find((watch) => watch.filename === filename) !== undefined;
-}
-
 /**
  * Implements leading-edge debounce on an asynchronous event stream.
  */
@@ -32,10 +28,9 @@ export async function* debounce<T>(events: AsyncIterable<T>, delay: number): Asy
   }
 }
 
-async function watch(
-  input: Pick<Watch, 'filename' | 'channel'>,
-  signal: AbortSignal,
-): Promise<void> {
+type WatchInput = Pick<Watch, 'filename' | 'channel'>;
+
+async function watch(input: WatchInput, signal: AbortSignal): Promise<void> {
   const { filename, channel } = input;
   try {
     const watcher = fs.watch(filename, { signal });
@@ -73,4 +68,8 @@ export class WatchGroup {
   async close(): Promise<void> {
     await Promise.all(this.watches.map((w) => w.watcher));
   }
+}
+
+function isWatched(group: WatchGroup, filename: PathLike): boolean {
+  return group.watches.find((watch) => watch.filename === filename) !== undefined;
 }
