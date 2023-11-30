@@ -21,7 +21,54 @@ describe('Output', () => {
     await fs.rm(dirname, { recursive: true });
   });
 
-  it('should build and rebuild a file', async () => {
+  it('should build and rebuild from a Cell', async () => {
+    const json = path.join(dirname, 'out.json');
+
+    const contents = { tag: 'foo', value: 'Hello, world!' };
+
+    const cell = new Cell(contents);
+
+    const jsonFile = new Target([cell], async (a) => {
+      const contents = JSON.stringify(await a.value);
+      await fs.writeFile(json, contents);
+      return hash(contents);
+    }).compute();
+
+    const jsonFileHash = await jsonFile.value;
+
+    const jsonFileContents = await fs.readFile(json, 'utf8');
+    assert.strictEqual(hash(jsonFileContents), jsonFileHash);
+    assert.deepStrictEqual(JSON.parse(jsonFileContents), contents);
+
+    assert.strictEqual(jsonFile.shouldRebuild, false);
+
+    cell.value = { ...cell.value, value: 'Goodbye, world!' };
+
+    assert.strictEqual(jsonFile.shouldRebuild, true);
+
+    const jsonFileHashUpdated = await jsonFile.compute().value;
+
+    const jsonFileContentsUpdated = await fs.readFile(json, 'utf8');
+    assert.strictEqual(hash(jsonFileContentsUpdated), jsonFileHashUpdated);
+    assert.deepStrictEqual(JSON.parse(jsonFileContentsUpdated), cell.value);
+  });
+});
+
+describe('Input', () => {
+  let ac: AbortController;
+  let dirname: string;
+
+  before(async () => {
+    ac = new AbortController();
+    dirname = await fs.mkdtemp(path.join(os.tmpdir(), 'incr-build-test-'));
+  });
+
+  after(async () => {
+    ac.abort();
+    await fs.rm(dirname, { recursive: true });
+  });
+
+  it('can be used with Target to build and rebuild a file', async () => {
     const hello = path.join(dirname, 'hello.txt');
     const world = path.join(dirname, 'world.txt');
     const out = path.join(dirname, 'out.txt');
@@ -82,38 +129,6 @@ describe('Output', () => {
     ac.abort();
     await Promise.all([helloInput.watcher, worldInput.watcher]);
   });
-
-  it('should build and rebuild a file from a non-file leaf node', async () => {
-    const json = path.join(dirname, 'out.json');
-
-    const contents = { tag: 'foo', value: 'Hello, world!' };
-
-    const cell = new Cell(contents);
-
-    const jsonFile = new Target([cell], async (a) => {
-      const contents = JSON.stringify(await a.value);
-      await fs.writeFile(json, contents);
-      return hash(contents);
-    }).compute();
-
-    const jsonFileHash = await jsonFile.value;
-
-    const jsonFileContents = await fs.readFile(json, 'utf8');
-    assert.strictEqual(hash(jsonFileContents), jsonFileHash);
-    assert.deepStrictEqual(JSON.parse(jsonFileContents), contents);
-
-    assert.strictEqual(jsonFile.shouldRebuild, false);
-
-    cell.value = { ...cell.value, value: 'Goodbye, world!' };
-
-    assert.strictEqual(jsonFile.shouldRebuild, true);
-
-    const jsonFileHashUpdated = await jsonFile.compute().value;
-
-    const jsonFileContentsUpdated = await fs.readFile(json, 'utf8');
-    assert.strictEqual(hash(jsonFileContentsUpdated), jsonFileHashUpdated);
-    assert.deepStrictEqual(JSON.parse(jsonFileContentsUpdated), cell.value);
-  });
 });
 
 describe('AutoInput', () => {
@@ -130,7 +145,7 @@ describe('AutoInput', () => {
     await fs.rm(dirname, { recursive: true });
   });
 
-  it('should build and rebuild a file automatically', async () => {
+  it('can be used with Target to build and automatically rebuild a file', async () => {
     const hello = path.join(dirname, 'hello.txt');
     const world = path.join(dirname, 'world.txt');
     const out = path.join(dirname, 'out.txt');
