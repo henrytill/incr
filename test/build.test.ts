@@ -6,6 +6,7 @@ import { describe, it, before, after } from 'node:test';
 
 import { AutoInput, Input, Target, hash } from '../src/build.js';
 import { Cell } from '../src/core.js';
+import { PathLike } from 'node:fs';
 
 describe('Output', () => {
   let ac: AbortController;
@@ -203,4 +204,55 @@ describe('AutoInput', () => {
     assert.strictEqual(outContentsUpdated.toString(), 'Goodbye, world!');
     assert.notStrictEqual(outHash, outHashUpdated);
   });
+
+  it('can be instantiated n times to watch for file changes', async () => {
+    const n = 100;
+
+    const files: string[] = Array.from({ length: n }, (_, i) =>
+      path.join(dirname, `test-${i.toString().padStart(3, '0')}.txt`),
+    );
+
+    await Promise.all(
+      files.map((file, i) => fs.writeFile(file, `hello-${i.toString().padStart(3, '0')}`)),
+    );
+
+    const watchedInputs = await Promise.all(files.map((file) => WatchedInput.of(file)));
+
+    await Promise.all(
+      files.map((file, i) => fs.writeFile(file, `goodbye-${i.toString().padStart(3, '0')}`)),
+    );
+
+    await Promise.all(watchedInputs.map((watched) => watched.consumer));
+
+    for (const [i, watched] of watchedInputs.entries()) {
+      assert.strictEqual(watched.input.value, hash(`goodbye-${i.toString().padStart(3, '0')}`));
+    }
+
+    await Promise.all(watchedInputs.map((watched) => watched.close()));
+  });
 });
+
+class WatchedInput {
+  constructor(
+    readonly abortController: AbortController,
+    readonly input: AutoInput,
+    readonly consumer: Promise<void>,
+  ) {}
+
+  static async of(filename: PathLike): Promise<WatchedInput> {
+    const abortController = new AbortController();
+    const input = await AutoInput.of(filename, abortController.signal);
+    const consumer = (async () => {
+      for await (const message of input.notifications.receive()) {
+        if (message?.filename === filename) break;
+      }
+    })();
+    return new WatchedInput(abortController, input, consumer);
+  }
+
+  async close(): Promise<void> {
+    this.abortController.abort();
+    await this.input.watcher;
+    await this.consumer;
+  }
+}
