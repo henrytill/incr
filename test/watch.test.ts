@@ -35,7 +35,6 @@ describe('WatchGroup', () => {
 
     const consumer = (async () => {
       for await (const message of channel!.receive()) {
-        console.log('Received message', message);
         if (message === undefined) continue;
         messages.push(message);
       }
@@ -49,8 +48,6 @@ describe('WatchGroup', () => {
     await consumer;
     ac.abort();
     await group.close();
-
-    console.log('Messages', messages);
 
     assert.deepStrictEqual(messages, [
       { filename: dirname, event: { eventType: 'change', filename: path.basename(filename) } },

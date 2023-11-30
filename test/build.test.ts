@@ -39,7 +39,6 @@ describe('Output', () => {
 
     const consumer = (async () => {
       for await (const filename of helloInput.notifications.receive()) {
-        console.log('Rebuild initiated by', filename, 'is complete');
         if (filename === hello) break;
       }
     })();

@@ -30,7 +30,6 @@ export class AsyncAutoCell<T> extends Cell<Promise<T>> {
       this._value = Promise.resolve(next);
       this.update();
       const roots = this.roots(); // TODO: combine with update()
-      console.debug('Rebuilding', roots.map((root) => root.key).join(', '));
       return Promise.all(roots.map((root) => root.compute().value)).then(() => this._value);
     });
   }

@@ -18,19 +18,15 @@ async function watch(input: Input, signal: AbortSignal): Promise<void> {
   const filename = input.key;
   try {
     const watcher = fs.watch(filename, { signal });
-    console.debug('Watching for changes to', filename);
     for await (const _event of debounce(watcher, 1000)) {
       input.value = fs.readFile(filename).then(hash);
-      console.debug('Updating', filename);
       await input.value;
       const roots = input.roots(); // TODO: combine with update()
-      console.debug('Rebuilding', roots.map((root) => root.key).join(', '));
       await Promise.all(roots.map((root) => root.compute().value));
       input.notifications.send(filename);
     }
   } catch (err: any) {
     if (err.name === 'AbortError') {
-      console.debug('Aborting watch of', filename);
       return;
     }
     throw err;

@@ -39,13 +39,11 @@ async function watch(
   const { filename, channel } = input;
   try {
     const watcher = fs.watch(filename, { signal });
-    console.debug('Watching for changes to', filename);
     for await (const event of debounce(watcher, 1000)) {
       channel.send({ filename, event });
     }
   } catch (err: any) {
     if (err.name === 'AbortError') {
-      console.debug('Aborting watch of', filename);
       return;
     }
     throw err;
