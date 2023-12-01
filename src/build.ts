@@ -15,32 +15,46 @@ export type Message = {
 export class Input extends Cell<HashDigest> {
   watcher: Promise<void>;
   notifications: Channel<Message> = new Channel();
+  controller = new AbortController();
 
-  private constructor(value: HashDigest, key: string, signal: AbortSignal) {
+  private constructor(value: HashDigest, key: string) {
     super(value, key);
-    this.watcher = watch(this, signal);
+    this.watcher = watch(this, this.controller.signal);
   }
 
-  static async of(filename: PathLike, signal: AbortSignal): Promise<Input> {
+  static async of(filename: PathLike): Promise<Input> {
     const value = await fs.readFile(filename).then(hash);
-    const ret = new Input(value, filename.toString(), signal);
+    const ret = new Input(value, filename.toString());
     return ret;
+  }
+
+  async close(): Promise<void> {
+    this.notifications.close();
+    this.controller.abort();
+    await this.watcher;
   }
 }
 
 export class AutoInput extends AutoCell<HashDigest> {
   watcher: Promise<void>;
   notifications: Channel<Message> = new Channel();
+  controller = new AbortController();
 
-  private constructor(value: HashDigest, key: string, signal: AbortSignal) {
+  private constructor(value: HashDigest, key: string) {
     super(value, key);
-    this.watcher = watch(this, signal);
+    this.watcher = watch(this, this.controller.signal);
   }
 
-  static async of(filename: PathLike, signal: AbortSignal): Promise<AutoInput> {
+  static async of(filename: PathLike): Promise<AutoInput> {
     const value = await fs.readFile(filename).then(hash);
-    const ret = new AutoInput(value, filename.toString(), signal);
+    const ret = new AutoInput(value, filename.toString());
     return ret;
+  }
+
+  async close(): Promise<void> {
+    this.notifications.close();
+    this.controller.abort();
+    await this.watcher;
   }
 }
 

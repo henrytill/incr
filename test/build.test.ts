@@ -56,16 +56,13 @@ describe('Output', () => {
 });
 
 describe('Input', () => {
-  let ac: AbortController;
   let dirname: string;
 
   before(async () => {
-    ac = new AbortController();
     dirname = await fs.mkdtemp(path.join(os.tmpdir(), 'incr-build-test-'));
   });
 
   after(async () => {
-    ac.abort();
     await fs.rm(dirname, { recursive: true });
   });
 
@@ -80,10 +77,8 @@ describe('Input', () => {
     await fs.writeFile(hello, helloContents);
     await fs.writeFile(world, worldContents);
 
-    const { signal } = ac;
-
-    const helloInput = await Input.of(hello, signal);
-    const worldInput = await Input.of(world, signal);
+    const helloInput = await Input.of(hello);
+    const worldInput = await Input.of(world);
 
     const consumer = (async () => {
       for await (const message of helloInput.notifications.receive()) {
@@ -126,23 +121,18 @@ describe('Input', () => {
     assert.strictEqual(outContentsUpdated.toString(), 'Goodbye, world!');
     assert.notStrictEqual(outHash, outHashUpdated);
 
-    helloInput.notifications.close();
-    ac.abort();
-    await Promise.all([helloInput.watcher, worldInput.watcher]);
+    await Promise.all([helloInput.close(), worldInput.close()]);
   });
 });
 
 describe('AutoInput', () => {
-  let ac: AbortController;
   let dirname: string;
 
   before(async () => {
-    ac = new AbortController();
     dirname = await fs.mkdtemp(path.join(os.tmpdir(), 'incr-build-test-'));
   });
 
   after(async () => {
-    ac.abort();
     await fs.rm(dirname, { recursive: true });
   });
 
@@ -157,10 +147,8 @@ describe('AutoInput', () => {
     await fs.writeFile(hello, helloContents);
     await fs.writeFile(world, worldContents);
 
-    const { signal } = ac;
-
-    const helloInput = await AutoInput.of(hello, signal);
-    const worldInput = await AutoInput.of(world, signal);
+    const helloInput = await AutoInput.of(hello);
+    const worldInput = await AutoInput.of(world);
 
     const consumer = (async () => {
       for await (const message of helloInput.notifications.receive()) {
@@ -203,6 +191,8 @@ describe('AutoInput', () => {
     assert.strictEqual(hash(outContentsUpdated), outHashUpdated);
     assert.strictEqual(outContentsUpdated.toString(), 'Goodbye, world!');
     assert.notStrictEqual(outHash, outHashUpdated);
+
+    await Promise.all([helloInput.close(), worldInput.close()]);
   });
 
   it('can be instantiated n times to watch for file changes', async () => {
@@ -234,25 +224,22 @@ describe('AutoInput', () => {
 
 class WatchedInput {
   constructor(
-    readonly abortController: AbortController,
     readonly input: AutoInput,
     readonly consumer: Promise<void>,
   ) {}
 
   static async of(filename: PathLike): Promise<WatchedInput> {
-    const abortController = new AbortController();
-    const input = await AutoInput.of(filename, abortController.signal);
+    const input = await AutoInput.of(filename);
     const consumer = (async () => {
       for await (const message of input.notifications.receive()) {
         if (message?.filename === filename) break;
       }
     })();
-    return new WatchedInput(abortController, input, consumer);
+    return new WatchedInput(input, consumer);
   }
 
   async close(): Promise<void> {
-    this.abortController.abort();
-    await this.input.watcher;
+    this.input.close();
     await this.consumer;
   }
 }
