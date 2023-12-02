@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 
 export type Node<A> = Cell<A> | Computable<A>;
@@ -117,7 +118,7 @@ function doCompute(computable: Computable<any>): Computable<any> {
 
   while (toCompute.length > 0) {
     const nodes = toCompute.pop();
-    if (nodes === undefined) throw new Error('Invariant violated');
+    assert.ok(nodes);
     if (nodes.length === 0) continue;
     for (const node of nodes) {
       if (computed.has(node)) continue;
@@ -136,7 +137,7 @@ function doUpdate(node: Node<any>): void {
 
   while (toUpdate.length > 0) {
     const node = toUpdate.pop();
-    if (node === undefined) throw new Error('Invariant violated');
+    assert.ok(node);
     if (updated.has(node)) continue;
     if (node instanceof Computable) {
       node.shouldRebuild = true;
@@ -156,7 +157,7 @@ function findRoots(input: Node<any>): Computable<any>[] {
 
   while (stack.length > 0) {
     const node = stack.pop();
-    if (node === undefined) throw new Error('Invariant violated');
+    assert.ok(node);
     if (visited.has(node)) continue;
     visited.add(node);
     if (node instanceof Computable && node.parents.length === 0) {
@@ -182,7 +183,7 @@ function doAutoUpdate(node: Node<any>): void {
 
   while (toUpdate.length > 0) {
     const node = toUpdate.pop();
-    if (node === undefined) throw new Error('Invariant violated');
+    assert.ok(node);
     if (updated.has(node)) continue;
     if (node instanceof Computable) {
       node.value_ = node.builder(...node.children);

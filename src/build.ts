@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import crypto, { BinaryLike } from 'node:crypto';
 import { PathLike } from 'node:fs';
 import fs, { FileChangeInfo } from 'node:fs/promises';
@@ -47,7 +48,7 @@ export class Input extends Cell<HashDigest> {
     ret.parents = file.parents;
     for (const parent of ret.parents) {
       const i = parent.children.findIndex((child) => child === file);
-      if (i === -1) throw new Error('Invariant violated');
+      assert.notEqual(i, -1);
       parent.children[i] = ret;
     }
     return ret;
@@ -81,7 +82,7 @@ export class AutoInput extends AutoCell<HashDigest> {
     ret.parents = input.parents;
     for (const parent of ret.parents) {
       const i = parent.children.findIndex((child) => child === input);
-      if (i === -1) throw new Error('Invariant violated');
+      assert.notEqual(i, -1);
       parent.children[i] = ret;
     }
     return ret;
