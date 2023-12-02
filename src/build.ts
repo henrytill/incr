@@ -40,6 +40,17 @@ export class Input extends Cell<HashDigest> {
     return ret;
   }
 
+  static from(file: File): Input {
+    const ret = new Input(file.value, file.key);
+    ret.parents = file.parents;
+    for (const parent of ret.parents) {
+      const i = parent.children.findIndex((child) => child === file);
+      if (i === -1) throw new Error('Invariant violated');
+      parent.children[i] = ret;
+    }
+    return ret;
+  }
+
   async close(): Promise<void> {
     this.notifications.close();
     this.controller.abort();
@@ -60,6 +71,17 @@ export class AutoInput extends AutoCell<HashDigest> {
   static async of(filename: PathLike): Promise<AutoInput> {
     const value = await fs.readFile(filename).then(hash);
     const ret = new AutoInput(value, filename.toString());
+    return ret;
+  }
+
+  static from(input: Input): AutoInput {
+    const ret = new AutoInput(input.value, input.key);
+    ret.parents = input.parents;
+    for (const parent of ret.parents) {
+      const i = parent.children.findIndex((child) => child === input);
+      if (i === -1) throw new Error('Invariant violated');
+      parent.children[i] = ret;
+    }
     return ret;
   }
 
