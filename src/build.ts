@@ -12,6 +12,8 @@ export type Message = {
   event: FileChangeInfo<string>;
 };
 
+export type BuildNode = File | Input | AutoInput | Target;
+
 export class File extends Cell<HashDigest> {
   private constructor(value: HashDigest, key: string) {
     super(value, key);
