@@ -1,4 +1,4 @@
-import assert from 'node:assert';
+import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import { NodeVisitor, Cell, Computable, AutoCell, AsyncComputable } from '../src/core.js';
@@ -14,24 +14,24 @@ describe('Computable', () => {
       return a.value + b.value;
     }).compute();
 
-    assert.strictEqual(x.value, 5);
-    assert.strictEqual(x.parents.length, 0);
-    assert.deepStrictEqual(x.children, [y, z]);
-    assert.deepStrictEqual(y.parents, [x]);
-    assert.deepStrictEqual(z.parents, [x]);
+    assert.equal(x.value, 5);
+    assert.equal(x.parents.length, 0);
+    assert.deepEqual(x.children, [y, z]);
+    assert.deepEqual(y.parents, [x]);
+    assert.deepEqual(z.parents, [x]);
 
     y.value = 4;
-    assert.strictEqual(x.compute().value, 7);
+    assert.equal(x.compute().value, 7);
 
     z.value = 5;
-    assert.strictEqual(x.compute().value, 9);
+    assert.equal(x.compute().value, 9);
 
-    assert.strictEqual(count, 3);
+    assert.equal(count, 3);
 
     z.value = 5;
-    assert.strictEqual(x.compute().value, 9);
+    assert.equal(x.compute().value, 9);
 
-    assert.strictEqual(count, 3);
+    assert.equal(count, 3);
   });
 
   it('correctly computes a larger example', () => {
@@ -47,17 +47,17 @@ describe('Computable', () => {
     const w = new Cell('results', 'w');
     const v = new Computable([w, x], (a, b) => `${a.value}: ${b.key} is ${b.value}`, 'v').compute();
 
-    assert.strictEqual(v.value, 'results: x is 5');
-    assert.strictEqual(v.parents.length, 0);
-    assert.deepStrictEqual(x.parents, [v]);
-    assert.deepStrictEqual(w.parents, [v]);
-    assert.deepStrictEqual(v.children, [w, x]);
+    assert.equal(v.value, 'results: x is 5');
+    assert.equal(v.parents.length, 0);
+    assert.deepEqual(x.parents, [v]);
+    assert.deepEqual(w.parents, [v]);
+    assert.deepEqual(v.children, [w, x]);
 
-    assert.strictEqual(v.key, 'v');
-    assert.strictEqual(w.key, 'w');
-    assert.strictEqual(x.key, 'x');
-    assert.strictEqual(y.key, 'y');
-    assert.strictEqual(z.key, 'z');
+    assert.equal(v.key, 'v');
+    assert.equal(w.key, 'w');
+    assert.equal(x.key, 'x');
+    assert.equal(y.key, 'y');
+    assert.equal(z.key, 'z');
 
     const visitor: NodeVisitor<number, number | undefined> = {
       visitCell: (node: Cell<number>) => {
@@ -69,15 +69,15 @@ describe('Computable', () => {
       },
     };
     const ret = y.accept(visitor);
-    assert.strictEqual(ret, 3);
-    assert.strictEqual(x.shouldRebuild, true);
-    assert.strictEqual(v.shouldRebuild, true);
-    assert.strictEqual(v.compute().value, 'results: x is 6');
+    assert.equal(ret, 3);
+    assert.equal(x.shouldRebuild, true);
+    assert.equal(v.shouldRebuild, true);
+    assert.equal(v.compute().value, 'results: x is 6');
 
     w.value = 'hello';
-    assert.strictEqual(x.shouldRebuild, false);
-    assert.strictEqual(v.shouldRebuild, true);
-    assert.strictEqual(v.compute().value, 'hello: x is 6');
+    assert.equal(x.shouldRebuild, false);
+    assert.equal(v.shouldRebuild, true);
+    assert.equal(v.compute().value, 'hello: x is 6');
   });
 
   it('works with AutoCell', () => {
@@ -92,13 +92,13 @@ describe('Computable', () => {
     const w = new AutoCell(4);
     const v = new Computable([w, x], (a, b) => a.value + b.value).compute();
 
-    assert.strictEqual(v.value, 9);
-    assert.strictEqual(count, 1);
+    assert.equal(v.value, 9);
+    assert.equal(count, 1);
 
     w.value = 5;
 
-    assert.strictEqual(v.value, 10);
-    assert.strictEqual(count, 1);
+    assert.equal(v.value, 10);
+    assert.equal(count, 1);
   });
 });
 
@@ -121,10 +121,10 @@ describe('AsyncComputable', () => {
       return a.value + (await b.value);
     });
 
-    assert.strictEqual(await t.compute().value, 10);
+    assert.equal(await t.compute().value, 10);
 
     z.value = 2;
 
-    assert.strictEqual(await t.compute().value, 11);
+    assert.equal(await t.compute().value, 11);
   });
 });

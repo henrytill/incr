@@ -1,4 +1,4 @@
-import assert from 'node:assert';
+import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -38,20 +38,20 @@ describe('Output', () => {
     const jsonFileHash = await jsonFile.value;
 
     const jsonFileContents = await fs.readFile(json, 'utf8');
-    assert.strictEqual(hash(jsonFileContents), jsonFileHash);
-    assert.deepStrictEqual(JSON.parse(jsonFileContents), contents);
+    assert.equal(hash(jsonFileContents), jsonFileHash);
+    assert.deepEqual(JSON.parse(jsonFileContents), contents);
 
-    assert.strictEqual(jsonFile.shouldRebuild, false);
+    assert.equal(jsonFile.shouldRebuild, false);
 
     cell.value = { ...cell.value, value: 'Goodbye, world!' };
 
-    assert.strictEqual(jsonFile.shouldRebuild, true);
+    assert.equal(jsonFile.shouldRebuild, true);
 
     const jsonFileHashUpdated = await jsonFile.compute().value;
 
     const jsonFileContentsUpdated = await fs.readFile(json, 'utf8');
-    assert.strictEqual(hash(jsonFileContentsUpdated), jsonFileHashUpdated);
-    assert.deepStrictEqual(JSON.parse(jsonFileContentsUpdated), cell.value);
+    assert.equal(hash(jsonFileContentsUpdated), jsonFileHashUpdated);
+    assert.deepEqual(JSON.parse(jsonFileContentsUpdated), cell.value);
   });
 });
 
@@ -87,8 +87,8 @@ describe('Input', () => {
       return true;
     })();
 
-    assert.strictEqual(helloInput.value, hash(helloContents));
-    assert.strictEqual(worldInput.value, hash(worldContents));
+    assert.equal(helloInput.value, hash(helloContents));
+    assert.equal(worldInput.value, hash(worldContents));
 
     const outTarget = new Target(
       [helloInput, worldInput],
@@ -102,14 +102,14 @@ describe('Input', () => {
       out,
     ).compute();
 
-    assert.deepStrictEqual(helloInput.parents, [outTarget]);
-    assert.deepStrictEqual(worldInput.parents, [outTarget]);
-    assert.deepStrictEqual(outTarget.children, [helloInput, worldInput]);
+    assert.deepEqual(helloInput.parents, [outTarget]);
+    assert.deepEqual(worldInput.parents, [outTarget]);
+    assert.deepEqual(outTarget.children, [helloInput, worldInput]);
 
     const outHash = await outTarget.value;
     const outContents = await fs.readFile(out);
-    assert.strictEqual(hash(outContents), outHash);
-    assert.strictEqual(outContents.toString(), 'Hello, world!');
+    assert.equal(hash(outContents), outHash);
+    assert.equal(outContents.toString(), 'Hello, world!');
 
     await fs.writeFile(hello, 'Goodbye, ');
     const received = await consumer;
@@ -117,9 +117,9 @@ describe('Input', () => {
 
     const outHashUpdated = await outTarget.compute().value;
     const outContentsUpdated = await fs.readFile(out);
-    assert.strictEqual(hash(outContentsUpdated), outHashUpdated);
-    assert.strictEqual(outContentsUpdated.toString(), 'Goodbye, world!');
-    assert.notStrictEqual(outHash, outHashUpdated);
+    assert.equal(hash(outContentsUpdated), outHashUpdated);
+    assert.equal(outContentsUpdated.toString(), 'Goodbye, world!');
+    assert.notEqual(outHash, outHashUpdated);
 
     await Promise.all([helloInput.close(), worldInput.close()]);
   });
@@ -157,8 +157,8 @@ describe('AutoInput', () => {
       return true;
     })();
 
-    assert.strictEqual(helloInput.value, hash(helloContents));
-    assert.strictEqual(worldInput.value, hash(worldContents));
+    assert.equal(helloInput.value, hash(helloContents));
+    assert.equal(worldInput.value, hash(worldContents));
 
     const outTarget = new Target(
       [helloInput, worldInput],
@@ -174,9 +174,9 @@ describe('AutoInput', () => {
 
     const outHash = await outTarget.value;
     const outContents = await fs.readFile(outTarget.key);
-    assert.strictEqual(hash(outContents), outHash);
-    assert.strictEqual(outContents.toString(), 'Hello, world!');
-    assert.strictEqual(helloInput.value, hash(helloContents));
+    assert.equal(hash(outContents), outHash);
+    assert.equal(outContents.toString(), 'Hello, world!');
+    assert.equal(helloInput.value, hash(helloContents));
 
     const goodbye = 'Goodbye, ';
 
@@ -184,13 +184,13 @@ describe('AutoInput', () => {
     const received = await consumer;
     assert.ok(received);
 
-    assert.strictEqual(helloInput.value, hash(goodbye));
+    assert.equal(helloInput.value, hash(goodbye));
 
     const outHashUpdated = await outTarget.value;
     const outContentsUpdated = await fs.readFile(outTarget.key);
-    assert.strictEqual(hash(outContentsUpdated), outHashUpdated);
-    assert.strictEqual(outContentsUpdated.toString(), 'Goodbye, world!');
-    assert.notStrictEqual(outHash, outHashUpdated);
+    assert.equal(hash(outContentsUpdated), outHashUpdated);
+    assert.equal(outContentsUpdated.toString(), 'Goodbye, world!');
+    assert.notEqual(outHash, outHashUpdated);
 
     await Promise.all([helloInput.close(), worldInput.close()]);
   });
@@ -215,7 +215,7 @@ describe('AutoInput', () => {
     await Promise.all(watchedInputs.map((watched) => watched.consumer));
 
     for (const [i, watched] of watchedInputs.entries()) {
-      assert.strictEqual(watched.input.value, hash(`goodbye-${i.toString().padStart(3, '0')}`));
+      assert.equal(watched.input.value, hash(`goodbye-${i.toString().padStart(3, '0')}`));
     }
 
     await Promise.all(watchedInputs.map((watched) => watched.close()));
