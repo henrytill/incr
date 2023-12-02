@@ -12,6 +12,18 @@ export type Message = {
   event: FileChangeInfo<string>;
 };
 
+export class File extends Cell<HashDigest> {
+  private constructor(value: HashDigest, key: string) {
+    super(value, key);
+  }
+
+  static async of(filename: PathLike): Promise<File> {
+    const value = await fs.readFile(filename).then(hash);
+    const ret = new File(value, filename.toString());
+    return ret;
+  }
+}
+
 export class Input extends Cell<HashDigest> {
   watcher: Promise<void>;
   notifications: Channel<Message> = new Channel();
