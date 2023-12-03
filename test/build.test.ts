@@ -5,7 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, it, before, after } from 'node:test';
 
-import { FileCell, AutoInput, Input, Target, hash } from '../src/build.js';
+import { FileCell, AutoInput, Input, Target, hash, Message } from '../src/build.js';
+import { Channel } from '../src/channel.js';
 import { Cell } from '../src/core.js';
 
 describe('Output', () => {
@@ -77,11 +78,13 @@ describe('Input', () => {
     await fs.writeFile(hello, helloContents);
     await fs.writeFile(world, worldContents);
 
-    const helloInput = await Input.of(hello);
-    const worldInput = await Input.of(world);
+    const notifications = new Channel<Message>();
+
+    const helloInput = await Input.of(hello, notifications);
+    const worldInput = await Input.of(world, notifications);
 
     const consumer = (async () => {
-      for await (const message of helloInput.notifications.receive()) {
+      for await (const message of notifications.receive()) {
         if (message?.filename === hello) break;
       }
       return true;
@@ -121,6 +124,7 @@ describe('Input', () => {
     assert.equal(outContentsUpdated.toString(), 'Goodbye, world!');
     assert.notEqual(outHash, outHashUpdated);
 
+    notifications.close();
     await Promise.all([helloInput.close(), worldInput.close()]);
   });
 
@@ -182,11 +186,13 @@ describe('AutoInput', () => {
     await fs.writeFile(hello, helloContents);
     await fs.writeFile(world, worldContents);
 
-    const helloInput = await AutoInput.of(hello);
-    const worldInput = await AutoInput.of(world);
+    const notifications = new Channel<Message>();
+
+    const helloInput = await AutoInput.of(hello, notifications);
+    const worldInput = await AutoInput.of(world, notifications);
 
     const consumer = (async () => {
-      for await (const message of helloInput.notifications.receive()) {
+      for await (const message of notifications.receive()) {
         if (message?.filename === hello) break;
       }
       return true;
@@ -227,6 +233,7 @@ describe('AutoInput', () => {
     assert.equal(outContentsUpdated.toString(), 'Goodbye, world!');
     assert.notEqual(outHash, outHashUpdated);
 
+    notifications.close();
     await Promise.all([helloInput.close(), worldInput.close()]);
   });
 
@@ -299,9 +306,10 @@ class WatchedInput {
   ) {}
 
   static async of(filename: PathLike): Promise<WatchedInput> {
-    const input = await AutoInput.of(filename);
+    const notifications = new Channel<Message>();
+    const input = await AutoInput.of(filename, notifications);
     const consumer = (async () => {
-      for await (const message of input.notifications.receive()) {
+      for await (const message of notifications.receive()) {
         if (message?.filename === filename) break;
       }
     })();
@@ -309,6 +317,7 @@ class WatchedInput {
   }
 
   async close(): Promise<void> {
+    this.input.notifications?.close();
     this.input.close();
     await this.consumer;
   }

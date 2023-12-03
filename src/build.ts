@@ -29,22 +29,25 @@ export class FileCell extends Cell<HashDigest> {
 
 export class Input extends Cell<HashDigest> {
   watcher: Promise<void>;
-  notifications: Channel<Message> = new Channel();
   controller = new AbortController();
 
-  private constructor(value: HashDigest, key: string) {
+  private constructor(
+    value: HashDigest,
+    key: string,
+    readonly notifications?: Channel<Message>,
+  ) {
     super(value, key);
     this.watcher = watch(this, this.controller.signal);
   }
 
-  static async of(filename: PathLike): Promise<Input> {
+  static async of(filename: PathLike, notifications?: Channel<Message>): Promise<Input> {
     const value = await fs.readFile(filename).then(hash);
-    const ret = new Input(value, filename.toString());
+    const ret = new Input(value, filename.toString(), notifications);
     return ret;
   }
 
-  static from(file: FileCell): Input {
-    const ret = new Input(file.value, file.key);
+  static from(file: FileCell, notifications?: Channel<Message>): Input {
+    const ret = new Input(file.value, file.key, notifications);
     ret.parents = file.parents;
     for (const parent of ret.parents) {
       const i = parent.children.findIndex((child) => child === file);
@@ -56,7 +59,6 @@ export class Input extends Cell<HashDigest> {
   }
 
   async close(): Promise<void> {
-    this.notifications.close();
     this.controller.abort();
     await this.watcher;
   }
@@ -64,22 +66,25 @@ export class Input extends Cell<HashDigest> {
 
 export class AutoInput extends AutoCell<HashDigest> {
   watcher: Promise<void>;
-  notifications: Channel<Message> = new Channel();
   controller = new AbortController();
 
-  private constructor(value: HashDigest, key: string) {
+  private constructor(
+    value: HashDigest,
+    key: string,
+    readonly notifications?: Channel<Message>,
+  ) {
     super(value, key);
     this.watcher = watch(this, this.controller.signal);
   }
 
-  static async of(filename: PathLike): Promise<AutoInput> {
+  static async of(filename: PathLike, notifications?: Channel<Message>): Promise<AutoInput> {
     const value = await fs.readFile(filename).then(hash);
-    const ret = new AutoInput(value, filename.toString());
+    const ret = new AutoInput(value, filename.toString(), notifications);
     return ret;
   }
 
-  static from(file: FileCell): AutoInput {
-    const ret = new AutoInput(file.value, file.key);
+  static from(file: FileCell, notifications?: Channel<Message>): AutoInput {
+    const ret = new AutoInput(file.value, file.key, notifications);
     ret.parents = file.parents;
     for (const parent of ret.parents) {
       const i = parent.children.findIndex((child) => child === file);
@@ -91,7 +96,6 @@ export class AutoInput extends AutoCell<HashDigest> {
   }
 
   async close(): Promise<void> {
-    this.notifications.close();
     this.controller.abort();
     await this.watcher;
   }
@@ -123,7 +127,7 @@ async function watch(input: Input, signal: AbortSignal): Promise<void> {
     const watcher = fs.watch(filename, { signal });
     for await (const event of debounce(watcher, 1000)) {
       input.value = await fs.readFile(filename).then(hash);
-      input.notifications.send({ filename, event });
+      input.notifications?.send({ filename, event });
     }
   } catch (err: any) {
     if (err.name === 'AbortError') {
