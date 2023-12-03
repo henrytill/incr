@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, it, before, after } from 'node:test';
 
-import { FileHash, AutoInput, Input, Target, hash } from '../src/build.js';
+import { FileCell, AutoInput, Input, Target, hash } from '../src/build.js';
 import { Cell } from '../src/core.js';
 
 describe('Output', () => {
@@ -124,7 +124,7 @@ describe('Input', () => {
     await Promise.all([helloInput.close(), worldInput.close()]);
   });
 
-  it('.from() can be used to convert a FileHash to an Input', async () => {
+  it('.from() can be used to convert a FileCell to an Input', async () => {
     const foo = path.join(dirname, 'foo.txt');
     const out = path.join(dirname, 'out.txt');
 
@@ -132,7 +132,7 @@ describe('Input', () => {
 
     await fs.writeFile(foo, helloContents);
 
-    const file = await FileHash.of(foo);
+    const file = await FileCell.of(foo);
 
     const target = new Target(
       [file],
@@ -256,7 +256,7 @@ describe('AutoInput', () => {
     await Promise.all(watchedInputs.map((watched) => watched.close()));
   });
 
-  it('.from() can be used to convert a FileHash to an AutoInput', async () => {
+  it('.from() can be used to convert a FileCell to an AutoInput', async () => {
     const bar = path.join(dirname, 'bar.txt');
     const out = path.join(dirname, 'out.txt');
 
@@ -264,7 +264,7 @@ describe('AutoInput', () => {
 
     await fs.writeFile(bar, helloContents);
 
-    const file = await FileHash.of(bar);
+    const file = await FileCell.of(bar);
 
     const target = new Target(
       [file],
