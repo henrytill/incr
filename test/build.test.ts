@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { PathLike } from 'node:fs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -6,7 +7,6 @@ import { describe, it, before, after } from 'node:test';
 
 import { File, AutoInput, Input, Target, hash } from '../src/build.js';
 import { Cell } from '../src/core.js';
-import { PathLike } from 'node:fs';
 
 describe('Output', () => {
   let ac: AbortController;
