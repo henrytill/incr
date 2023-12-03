@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, it, before, after } from 'node:test';
 
-import { AutoInput, Input, Target, hash } from '../src/build.js';
+import { File, AutoInput, Input, Target, hash } from '../src/build.js';
 import { Cell } from '../src/core.js';
 import { PathLike } from 'node:fs';
 
@@ -123,6 +123,41 @@ describe('Input', () => {
 
     await Promise.all([helloInput.close(), worldInput.close()]);
   });
+
+  it('.from() can be used to convert a File to an Input', async () => {
+    const foo = path.join(dirname, 'foo.txt');
+    const out = path.join(dirname, 'out.txt');
+
+    const helloContents = 'Hello, world!';
+
+    await fs.writeFile(foo, helloContents);
+
+    const file = await File.of(foo);
+
+    const target = new Target(
+      [file],
+      async (a) => {
+        const contents = await fs.readFile(a.key);
+        await fs.writeFile(out, contents);
+        return hash(contents);
+      },
+      out,
+    ).compute();
+
+    await target.value;
+
+    assert.deepEqual(file.parents, [target]);
+    assert.deepEqual(target.children, [file]);
+
+    const input = Input.from(file);
+
+    assert.deepEqual(input.parents, [target]);
+    assert.deepEqual(target.children, [input]);
+
+    assert.deepEqual(file.parents, []);
+
+    await input.close();
+  });
 });
 
 describe('AutoInput', () => {
@@ -219,6 +254,41 @@ describe('AutoInput', () => {
     }
 
     await Promise.all(watchedInputs.map((watched) => watched.close()));
+  });
+
+  it('.from() can be used to convert a File to an AutoInput', async () => {
+    const bar = path.join(dirname, 'bar.txt');
+    const out = path.join(dirname, 'out.txt');
+
+    const helloContents = 'Hello, world!';
+
+    await fs.writeFile(bar, helloContents);
+
+    const file = await File.of(bar);
+
+    const target = new Target(
+      [file],
+      async (a) => {
+        const contents = await fs.readFile(a.key);
+        await fs.writeFile(out, contents);
+        return hash(contents);
+      },
+      out,
+    ).compute();
+
+    await target.value;
+
+    assert.deepEqual(file.parents, [target]);
+    assert.deepEqual(target.children, [file]);
+
+    const autoInput = await AutoInput.from(file);
+
+    assert.deepEqual(autoInput.parents, [target]);
+    assert.deepEqual(target.children, [autoInput]);
+
+    assert.deepEqual(file.parents, []);
+
+    await autoInput.close();
   });
 });
 

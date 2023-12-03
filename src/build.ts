@@ -51,6 +51,7 @@ export class Input extends Cell<HashDigest> {
       assert.notEqual(i, -1);
       parent.children[i] = ret;
     }
+    file.parents = [];
     return ret;
   }
 
@@ -77,14 +78,15 @@ export class AutoInput extends AutoCell<HashDigest> {
     return ret;
   }
 
-  static from(input: Input): AutoInput {
-    const ret = new AutoInput(input.value, input.key);
-    ret.parents = input.parents;
+  static from(file: File): AutoInput {
+    const ret = new AutoInput(file.value, file.key);
+    ret.parents = file.parents;
     for (const parent of ret.parents) {
-      const i = parent.children.findIndex((child) => child === input);
+      const i = parent.children.findIndex((child) => child === file);
       assert.notEqual(i, -1);
       parent.children[i] = ret;
     }
+    file.parents = [];
     return ret;
   }
 
