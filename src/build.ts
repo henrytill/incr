@@ -28,8 +28,8 @@ export class FileCell extends Cell<HashDigest> {
 }
 
 export class Input extends Cell<HashDigest> {
-  watcher: Promise<void>;
-  controller = new AbortController();
+  readonly watcher: Promise<void>;
+  readonly controller = new AbortController();
 
   private constructor(
     value: HashDigest,
@@ -65,8 +65,8 @@ export class Input extends Cell<HashDigest> {
 }
 
 export class AutoInput extends AutoCell<HashDigest> {
-  watcher: Promise<void>;
-  controller = new AbortController();
+  readonly watcher: Promise<void>;
+  readonly controller = new AbortController();
 
   private constructor(
     value: HashDigest,
