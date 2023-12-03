@@ -13,16 +13,16 @@ export type Message = {
   event: FileChangeInfo<string>;
 };
 
-export type BuildNode = File | Input | AutoInput | Target;
+export type BuildNode = FileHash | Input | AutoInput | Target;
 
-export class File extends Cell<HashDigest> {
+export class FileHash extends Cell<HashDigest> {
   private constructor(value: HashDigest, key: string) {
     super(value, key);
   }
 
-  static async of(filename: PathLike): Promise<File> {
+  static async of(filename: PathLike): Promise<FileHash> {
     const value = await fs.readFile(filename).then(hash);
-    const ret = new File(value, filename.toString());
+    const ret = new FileHash(value, filename.toString());
     return ret;
   }
 }
@@ -43,7 +43,7 @@ export class Input extends Cell<HashDigest> {
     return ret;
   }
 
-  static from(file: File): Input {
+  static from(file: FileHash): Input {
     const ret = new Input(file.value, file.key);
     ret.parents = file.parents;
     for (const parent of ret.parents) {
@@ -78,7 +78,7 @@ export class AutoInput extends AutoCell<HashDigest> {
     return ret;
   }
 
-  static from(file: File): AutoInput {
+  static from(file: FileHash): AutoInput {
     const ret = new AutoInput(file.value, file.key);
     ret.parents = file.parents;
     for (const parent of ret.parents) {
