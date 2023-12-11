@@ -108,8 +108,7 @@ function doCompute(computable: Computable<any>): Computable<any> {
 
   const top = (): Computable<any>[] => toCompute[toCompute.length - 1];
 
-  while (top().length > 0) {
-    const nodes = top();
+  for (let nodes = top(); nodes.length > 0; nodes = top()) {
     const computableChildren = nodes.flatMap((node) =>
       node.children.filter((child) => child instanceof Computable && child.shouldRebuild),
     ) as Computable<any>[];
