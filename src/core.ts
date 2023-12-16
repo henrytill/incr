@@ -65,7 +65,7 @@ export class Computable<A> {
 
   constructor(
     public children: Node<any>[],
-    public computeFunction: ComputeFunction<any, A>,
+    readonly computeFunction: ComputeFunction<any, A>,
     readonly key: string = crypto.randomUUID(),
   ) {
     for (const child of this.children) {
