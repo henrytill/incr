@@ -65,7 +65,7 @@ export class Computable<A> {
 
   constructor(
     public children: Node<any>[],
-    public builder: ComputeFunction<any, A>,
+    public computeFunction: ComputeFunction<any, A>,
     readonly key: string = crypto.randomUUID(),
   ) {
     for (const child of this.children) {
@@ -121,7 +121,7 @@ function doCompute(computable: Computable<any>): Computable<any> {
     if (nodes.length === 0) continue;
     for (const node of nodes) {
       if (computed.has(node)) continue;
-      node.value_ = node.builder(...node.children);
+      node.value_ = node.computeFunction(...node.children);
       node.shouldRebuild = false;
       computed.add(node);
     }
@@ -185,7 +185,7 @@ function doAutoUpdate(node: Node<any>): void {
     assert.ok(node);
     if (updated.has(node)) continue;
     if (node instanceof Computable) {
-      node.value_ = node.builder(...node.children);
+      node.value_ = node.computeFunction(...node.children);
       node.shouldRebuild = false;
     }
     updated.add(node);
