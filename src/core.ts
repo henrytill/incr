@@ -64,7 +64,7 @@ export class Computable<A> {
   shouldRebuild: boolean = true;
 
   constructor(
-    public children: Node<any>[],
+    readonly children: Node<any>[],
     readonly computeFunction: ComputeFunction<any, A>,
     readonly key: string = crypto.randomUUID(),
   ) {
