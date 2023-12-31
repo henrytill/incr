@@ -15,7 +15,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "prepare": "tsc",
-    "lint": "eslint src/*.ts test/*.ts",
+    "lint": "eslint src test --ext .ts",
     "fmt": "prettier --write src test",
     "build": "tsc",
     "start": "tsc -w",
