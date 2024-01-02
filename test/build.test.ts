@@ -24,33 +24,27 @@ describe('Output', () => {
     });
 
     it('should build and rebuild from a Cell', async () => {
-        const json = path.join(dirname, 'out.json');
+        const cellContents = { tag: 'foo', value: 'Hello, world!' };
+        const cell = new Cell(cellContents);
 
-        const contents = { tag: 'foo', value: 'Hello, world!' };
-
-        const cell = new Cell(contents);
-
+        const jsonPath = path.join(dirname, 'out.json');
         const jsonFile = new Target([cell], async (a) => {
             const contents = JSON.stringify(await a.value);
-            await fs.writeFile(json, contents);
+            await fs.writeFile(jsonPath, contents);
             return hash(contents);
         }).compute();
 
         const jsonFileHash = await jsonFile.value;
-
-        const jsonFileContents = await fs.readFile(json, 'utf8');
+        const jsonFileContents = await fs.readFile(jsonPath, 'utf8');
         assert.equal(hash(jsonFileContents), jsonFileHash);
-        assert.deepEqual(JSON.parse(jsonFileContents), contents);
-
+        assert.deepEqual(JSON.parse(jsonFileContents), cellContents);
         assert.equal(jsonFile.shouldRebuild, false);
 
         cell.value = { ...cell.value, value: 'Goodbye, world!' };
-
         assert.equal(jsonFile.shouldRebuild, true);
 
         const jsonFileHashUpdated = await jsonFile.compute().value;
-
-        const jsonFileContentsUpdated = await fs.readFile(json, 'utf8');
+        const jsonFileContentsUpdated = await fs.readFile(jsonPath, 'utf8');
         assert.equal(hash(jsonFileContentsUpdated), jsonFileHashUpdated);
         assert.deepEqual(JSON.parse(jsonFileContentsUpdated), cell.value);
     });
@@ -71,18 +65,12 @@ describe('Input', () => {
         const hello = path.join(dirname, 'hello.txt');
         const world = path.join(dirname, 'world.txt');
         const out = path.join(dirname, 'out.txt');
-
         const helloContents = 'Hello, ';
         const worldContents = 'world!';
-
         await fs.writeFile(hello, helloContents);
         await fs.writeFile(world, worldContents);
 
         const notifications = new Channel<Message>();
-
-        const helloInput = await Input.of(hello, notifications);
-        const worldInput = await Input.of(world, notifications);
-
         const consumer = (async () => {
             for await (const message of notifications.receive()) {
                 if (message?.filename === hello) break;
@@ -90,6 +78,8 @@ describe('Input', () => {
             return true;
         })();
 
+        const helloInput = await Input.of(hello, notifications);
+        const worldInput = await Input.of(world, notifications);
         assert.equal(helloInput.value, hash(helloContents));
         assert.equal(worldInput.value, hash(worldContents));
 
@@ -131,13 +121,9 @@ describe('Input', () => {
     it('.from() can be used to convert a FileCell to an Input', async () => {
         const foo = path.join(dirname, 'foo.txt');
         const out = path.join(dirname, 'out.txt');
-
         const helloContents = 'Hello, world!';
-
         await fs.writeFile(foo, helloContents);
-
         const file = await FileCell.of(foo);
-
         const target = new Target(
             [file],
             async (a) => {
@@ -149,16 +135,13 @@ describe('Input', () => {
         ).compute();
 
         await target.value;
-
         assert.deepEqual(file.parents, [target]);
         assert.deepEqual(target.children, [file]);
 
         const input = Input.from(file);
-
-        assert.deepEqual(input.parents, [target]);
-        assert.deepEqual(target.children, [input]);
-
         assert.deepEqual(file.parents, []);
+        assert.deepEqual(target.children, [input]);
+        assert.deepEqual(input.parents, [target]);
 
         await input.close();
     });
@@ -179,18 +162,12 @@ describe('AutoInput', () => {
         const hello = path.join(dirname, 'hello.txt');
         const world = path.join(dirname, 'world.txt');
         const out = path.join(dirname, 'out.txt');
-
         const helloContents = 'Hello, ';
         const worldContents = 'world!';
-
         await fs.writeFile(hello, helloContents);
         await fs.writeFile(world, worldContents);
 
         const notifications = new Channel<Message>();
-
-        const helloInput = await AutoInput.of(hello, notifications);
-        const worldInput = await AutoInput.of(world, notifications);
-
         const consumer = (async () => {
             for await (const message of notifications.receive()) {
                 if (message?.filename === hello) break;
@@ -198,6 +175,8 @@ describe('AutoInput', () => {
             return true;
         })();
 
+        const helloInput = await AutoInput.of(hello, notifications);
+        const worldInput = await AutoInput.of(world, notifications);
         assert.equal(helloInput.value, hash(helloContents));
         assert.equal(worldInput.value, hash(worldContents));
 
@@ -224,7 +203,6 @@ describe('AutoInput', () => {
         await fs.writeFile(hello, goodbye);
         const received = await consumer;
         assert.ok(received);
-
         assert.equal(helloInput.value, hash(goodbye));
 
         const outHashUpdated = await outTarget.value;
@@ -235,6 +213,36 @@ describe('AutoInput', () => {
 
         notifications.close();
         await Promise.all([helloInput.close(), worldInput.close()]);
+    });
+
+    it('.from() can be used to convert a FileCell to an AutoInput', async () => {
+        const bar = path.join(dirname, 'bar.txt');
+        const out = path.join(dirname, 'out.txt');
+        const helloContents = 'Hello, world!';
+        await fs.writeFile(bar, helloContents);
+
+        const file = await FileCell.of(bar);
+
+        const target = new Target(
+            [file],
+            async (a) => {
+                const contents = await fs.readFile(a.key);
+                await fs.writeFile(out, contents);
+                return hash(contents);
+            },
+            out,
+        ).compute();
+
+        await target.value;
+        assert.deepEqual(file.parents, [target]);
+        assert.deepEqual(target.children, [file]);
+
+        const autoInput = AutoInput.from(file);
+        assert.deepEqual(autoInput.parents, [target]);
+        assert.deepEqual(target.children, [autoInput]);
+        assert.deepEqual(file.parents, []);
+
+        await autoInput.close();
     });
 
     it('can be instantiated n times to watch for file changes', async () => {
@@ -261,41 +269,6 @@ describe('AutoInput', () => {
         }
 
         await Promise.all(watchedInputs.map((watched) => watched.close()));
-    });
-
-    it('.from() can be used to convert a FileCell to an AutoInput', async () => {
-        const bar = path.join(dirname, 'bar.txt');
-        const out = path.join(dirname, 'out.txt');
-
-        const helloContents = 'Hello, world!';
-
-        await fs.writeFile(bar, helloContents);
-
-        const file = await FileCell.of(bar);
-
-        const target = new Target(
-            [file],
-            async (a) => {
-                const contents = await fs.readFile(a.key);
-                await fs.writeFile(out, contents);
-                return hash(contents);
-            },
-            out,
-        ).compute();
-
-        await target.value;
-
-        assert.deepEqual(file.parents, [target]);
-        assert.deepEqual(target.children, [file]);
-
-        const autoInput = await AutoInput.from(file);
-
-        assert.deepEqual(autoInput.parents, [target]);
-        assert.deepEqual(target.children, [autoInput]);
-
-        assert.deepEqual(file.parents, []);
-
-        await autoInput.close();
     });
 });
 
