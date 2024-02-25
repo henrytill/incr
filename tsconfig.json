@@ -7,7 +7,7 @@
     "module": "nodenext"
   },
   "include": [
-    "src/**/*",
-    "test/**/*"
+    "src/**/*.js",
+    "test/**/*.js"
   ]
 }
