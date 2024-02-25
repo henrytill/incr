@@ -6,10 +6,11 @@
   },
   "type": "module",
   "exports": "./src/index.mjs",
-  "types": "./src/index.d.ts",
+  "types": "./dist/src/index.d.ts",
   "files": [
     "tsconfig.json",
-    "src"
+    "src",
+    "dist"
   ],
   "scripts": {
     "prepare": "tsc --project tsconfig.publish.json",

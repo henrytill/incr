@@ -1,5 +1,4 @@
 .github/
+dist/
 *.json
 *.yml
-*.d.ts
-*.d.ts.map
