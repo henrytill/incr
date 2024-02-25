@@ -6,15 +6,16 @@
   },
   "type": "module",
   "exports": "./src/index.mjs",
+  "types": "./src/index.d.ts",
   "files": [
     "tsconfig.json",
     "src"
   ],
   "scripts": {
-    "prepare": "tsc",
+    "prepare": "tsc --project tsconfig.publish.json",
     "lint": "eslint src test --ext .ts",
     "fmt": "prettier --write src test",
-    "build": "tsc",
+    "check": "tsc",
     "start": "tsc -w",
     "pretest": "tsc",
     "test": "node --test test"

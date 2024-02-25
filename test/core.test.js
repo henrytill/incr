@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { Cell, Computable, AutoCell, AsyncComputable } from '../src/core.mjs';
+import { Cell, Computable, AutoCell, AsyncComputable } from '../src/core.js';
 
 /**
  * @template A, B
- * @typedef {import('../src/core.mjs').NodeVisitor<A, B>} NodeVisitor<A, B>
+ * @typedef {import('../src/core.js').NodeVisitor<A, B>} NodeVisitor<A, B>
  */
 
 describe('Computable', () => {

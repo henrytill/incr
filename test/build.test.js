@@ -4,13 +4,13 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, it, before, after } from 'node:test';
 
-import { FileCell, AutoInput, Input, Target, hash } from '../src/build.mjs';
-import { Channel } from '../src/channel.mjs';
-import { Cell } from '../src/core.mjs';
+import { FileCell, AutoInput, Input, Target, hash } from '../src/build.js';
+import { Channel } from '../src/channel.js';
+import { Cell } from '../src/core.js';
 
 /** @typedef {import('node:fs').PathLike} PathLike */
 
-/** @typedef {import('../src/build.mjs').Message} Message */
+/** @typedef {import('../src/build.js').Message} Message */
 
 describe('Output', () => {
   /** @type {AbortController} */

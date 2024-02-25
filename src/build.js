@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 
-import { Channel } from './channel.mjs';
-import { AsyncComputable, AutoCell, Cell } from './core.mjs';
+import { Channel } from './channel.js';
+import { AsyncComputable, AutoCell, Cell } from './core.js';
 
 /** @typedef {import('node:crypto').BinaryLike} BinaryLike */
 
