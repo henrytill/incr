@@ -5,17 +5,18 @@
     "node": ">=18"
   },
   "type": "module",
-  "exports": "./src/index.mjs",
-  "types": "./src/index.d.ts",
+  "main": "./src/index.js",
+  "types": "./dist/src/index.js",
   "files": [
     "tsconfig.json",
-    "src"
+    "src",
+    "dist"
   ],
   "scripts": {
-    "prepare": "tsc --project tsconfig.publish.json",
+    "prepare": "tsc",
     "lint": "eslint src test --ext .ts",
     "fmt": "prettier --write src test",
-    "check": "tsc",
+    "build": "tsc",
     "start": "tsc -w",
     "pretest": "tsc",
     "test": "node --test test"
