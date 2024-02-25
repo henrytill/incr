@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { NodeVisitor, Cell, Computable, AutoCell, AsyncComputable } from '../src/core.js';
+import { Cell, Computable, AutoCell, AsyncComputable } from '../src/core.mjs';
+
+/**
+ * @template A, B
+ * @typedef {import('../src/core.mjs').NodeVisitor<A, B>} NodeVisitor<A, B>
+ */
 
 describe('Computable', () => {
   it('correctly computes', () => {
@@ -9,7 +14,7 @@ describe('Computable', () => {
 
     const y = new Cell(2);
     const z = new Cell(3);
-    const x = new Computable([y, z], function (this: any, a, b): number {
+    const x = new Computable([y, z], function (a, b) {
       count += 1;
       return a.value + b.value;
     }).compute();
@@ -39,7 +44,7 @@ describe('Computable', () => {
     const y = new Cell(2, 'y');
     const x = new Computable(
       [y, z],
-      function (this: any, a, b): number {
+      function (a, b) {
         return a.value + b.value;
       },
       'x',
@@ -59,12 +64,13 @@ describe('Computable', () => {
     assert.equal(y.key, 'y');
     assert.equal(z.key, 'z');
 
-    const visitor: NodeVisitor<number, number | undefined> = {
-      visitCell: (node: Cell<number>) => {
+    /** @type {NodeVisitor<number, number | undefined>} */
+    const visitor = {
+      visitCell: (node) => {
         node.value += 1;
         return node.value;
       },
-      visitComputable: (_node: Computable<number>) => {
+      visitComputable: (_node) => {
         return undefined;
       },
     };
@@ -85,7 +91,7 @@ describe('Computable', () => {
 
     const z = new AutoCell(3);
     const y = new AutoCell(2);
-    const x = new Computable([y, z], function (a, b): number {
+    const x = new Computable([y, z], function (a, b) {
       count += 1;
       return a.value + b.value;
     }).compute();

@@ -1,12 +1,15 @@
 import assert from 'node:assert/strict';
 import { describe, it, before, after } from 'node:test';
 
-import { Channel } from '../src/channel.js';
+import { Channel } from '../src/channel.mjs';
 
-type Message = { tag: 'value'; value: string } | { tag: 'close' };
+/**
+ * @typedef {{ tag: 'value'; value: string } | { tag: 'close' }} Message
+ */
 
 describe('Channel', () => {
-  let channel: Channel<Message>;
+  /** @type {Channel<Message>} */
+  let channel;
 
   before(() => {
     channel = new Channel();
@@ -17,7 +20,8 @@ describe('Channel', () => {
   });
 
   it('should receive messages', async () => {
-    const received: Message[] = [];
+    /** @type {Message[]} */
+    const received = [];
 
     const consumer = (async () => {
       for await (const message of channel.receive()) {
@@ -31,7 +35,8 @@ describe('Channel', () => {
       }
     })();
 
-    const sent: Message[] = [
+    /** @type {Message[]} */
+    const sent = [
       { tag: 'value', value: 'message 1' },
       { tag: 'value', value: 'message 2' },
       { tag: 'close' },

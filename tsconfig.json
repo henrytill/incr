@@ -1,12 +1,10 @@
 {
   "compilerOptions": {
-    "composite": true,
-    "declarationMap": true,
-    "incremental": true,
-    "module": "nodenext",
-    "outDir": "dist",
-    "sourceMap": true,
-    "strict": true
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": true,
+    "module": "nodenext"
   },
   "include": [
     "src/**/*",

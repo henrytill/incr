@@ -5,22 +5,19 @@
     "node": ">=18"
   },
   "type": "module",
-  "exports": "./dist/src/index.js",
-  "types": "./dist/src/index.d.ts",
+  "exports": "./src/index.mjs",
   "files": [
     "tsconfig.json",
-    "src",
-    "dist/src"
+    "src"
   ],
   "scripts": {
-    "clean": "rm -rf dist",
     "prepare": "tsc",
     "lint": "eslint src test --ext .ts",
     "fmt": "prettier --write src test",
     "build": "tsc",
     "start": "tsc -w",
     "pretest": "tsc",
-    "test": "node --enable-source-maps --test dist/test"
+    "test": "node --test test"
   },
   "devDependencies": {
     "@types/node": "^20.11.20",

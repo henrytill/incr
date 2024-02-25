@@ -1,23 +1,48 @@
-type Resolve<T> = (value: T | PromiseLike<T>) => void;
+// @ts-check
 
-export class Channel<T> {
-  private queue: T[] = [];
-  private resolveQueue: Resolve<T | undefined>[] = [];
-  private running: boolean = true;
+/**
+ * @template T
+ * @typedef {(value: T | PromiseLike<T>) => void} Resolve<T>
+ */
+
+/** @template T */
+export class Channel {
+  /**
+   * @private
+   * @type {T[]}
+   */
+  queue = [];
+
+  /**
+   * @private
+   * @type {Resolve<T | undefined>[]}
+   */
+  resolveQueue = [];
+
+  /**
+   * @private
+   * @type {boolean}
+   */
+  running = true;
 
   async *receive() {
     while (this.running || this.queue.length > 0 || this.resolveQueue.length > 0) {
       if (this.queue.length > 0) {
         yield this.queue.shift();
       } else {
-        const promise = new Promise<T | undefined>((resolve) => this.resolveQueue.push(resolve));
+        /** @type {Promise<T | undefined>} */
+        const promise = new Promise((resolve) => this.resolveQueue.push(resolve));
         const value = await promise;
         yield value;
       }
     }
   }
 
-  send(message: T): boolean {
+  /**
+   * @param {T} message
+   * @returns {boolean}
+   */
+  send(message) {
     if (!this.running) return false;
     const resolve = this.resolveQueue.shift();
     if (resolve) {

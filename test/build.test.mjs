@@ -1,17 +1,22 @@
 import assert from 'node:assert/strict';
-import { PathLike } from 'node:fs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, it, before, after } from 'node:test';
 
-import { FileCell, AutoInput, Input, Target, hash, Message } from '../src/build.js';
-import { Channel } from '../src/channel.js';
-import { Cell } from '../src/core.js';
+import { FileCell, AutoInput, Input, Target, hash } from '../src/build.mjs';
+import { Channel } from '../src/channel.mjs';
+import { Cell } from '../src/core.mjs';
+
+/** @typedef {import('node:fs').PathLike} PathLike */
+
+/** @typedef {import('../src/build.mjs').Message} Message */
 
 describe('Output', () => {
-  let ac: AbortController;
-  let dirname: string;
+  /** @type {AbortController} */
+  let ac;
+  /** @type {string} */
+  let dirname;
 
   before(async () => {
     ac = new AbortController();
@@ -51,7 +56,8 @@ describe('Output', () => {
 });
 
 describe('Input', () => {
-  let dirname: string;
+  /** @type {string} */
+  let dirname;
 
   before(async () => {
     dirname = await fs.mkdtemp(path.join(os.tmpdir(), 'incr-build-test-'));
@@ -70,7 +76,8 @@ describe('Input', () => {
     await fs.writeFile(hello, helloContents);
     await fs.writeFile(world, worldContents);
 
-    const notifications = new Channel<Message>();
+    /** @type {Channel<Message>} */
+    const notifications = new Channel();
     const consumer = (async () => {
       for await (const message of notifications.receive()) {
         if (message?.filename === hello) break;
@@ -148,7 +155,8 @@ describe('Input', () => {
 });
 
 describe('AutoInput', () => {
-  let dirname: string;
+  /** @type {string} */
+  let dirname;
 
   before(async () => {
     dirname = await fs.mkdtemp(path.join(os.tmpdir(), 'incr-build-test-'));
@@ -167,7 +175,8 @@ describe('AutoInput', () => {
     await fs.writeFile(hello, helloContents);
     await fs.writeFile(world, worldContents);
 
-    const notifications = new Channel<Message>();
+    /** @type {Channel<Message>} */
+    const notifications = new Channel();
     const consumer = (async () => {
       for await (const message of notifications.receive()) {
         if (message?.filename === hello) break;
@@ -248,7 +257,8 @@ describe('AutoInput', () => {
   it('can be instantiated n times to watch for file changes', async () => {
     const n = 100;
 
-    const files: string[] = Array.from({ length: n }, (_, i) =>
+    /** @type {string[]} */
+    const files = Array.from({ length: n }, (_, i) =>
       path.join(dirname, `test-${i.toString().padStart(3, '0')}.txt`),
     );
 
@@ -273,13 +283,34 @@ describe('AutoInput', () => {
 });
 
 class WatchedInput {
-  constructor(
-    readonly input: AutoInput,
-    readonly consumer: Promise<void>,
-  ) {}
+  /**
+   * @readonly
+   * @type {AutoInput}
+   */
+  input;
 
-  static async of(filename: PathLike): Promise<WatchedInput> {
-    const notifications = new Channel<Message>();
+  /**
+   * @readonly
+   * @type {Promise<void>}
+   */
+  consumer;
+
+  /**
+   * @param {AutoInput} input
+   * @param {Promise<void>} consumer
+   */
+  constructor(input, consumer) {
+    this.input = input;
+    this.consumer = consumer;
+  }
+
+  /**
+   * @param {PathLike} filename
+   * @returns {Promise<WatchedInput>}
+   */
+  static async of(filename) {
+    /** @type {Channel<Message>} */
+    const notifications = new Channel();
     const input = await AutoInput.of(filename, notifications);
     const consumer = (async () => {
       for await (const message of notifications.receive()) {
@@ -289,7 +320,10 @@ class WatchedInput {
     return new WatchedInput(input, consumer);
   }
 
-  async close(): Promise<void> {
+  /**
+   * @returns {Promise<void>}
+   */
+  async close() {
     this.input.notifications?.close();
     this.input.close();
     await this.consumer;
