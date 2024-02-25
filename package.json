@@ -1,6 +1,16 @@
 {
   "name": "@henrytill/incr",
   "version": "0.1.0",
+  "description": "A small library for building things",
+  "homepage": "https://github.com/henrytill/incr#readme",
+  "bugs": {
+    "url": "https://github.com/henrytill/incr/issues"
+  },
+  "license": "MPL-2.0",
+  "author": {
+    "name": "Henry Till",
+    "email": "henrytill@gmail.com"
+  },
   "engines": {
     "node": ">=18"
   },
