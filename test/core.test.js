@@ -8,16 +8,26 @@ import { Cell, Computable, AutoCell, AsyncComputable } from '../src/core.js';
  * @typedef {import('../src/core.js').NodeVisitor<A, B>} NodeVisitor<A, B>
  */
 
+/**
+ * @template A, B
+ * @typedef {import('../src/core.js').ComputeFunction<A, B>} ComputeFunction<A, B>
+ */
+
 describe('Computable', () => {
   it('correctly computes', () => {
     let count = 0;
 
     const y = new Cell(2);
     const z = new Cell(3);
-    const x = new Computable([y, z], (a, b) => {
-      count += 1;
-      return a.value + b.value;
-    }).compute();
+    const x = new Computable(
+      [y, z],
+      /** @type {ComputeFunction<any, number>} */ (
+        (a, b) => {
+          count += 1;
+          return a.value + b.value;
+        }
+      ),
+    ).compute();
 
     assert.equal(x.value, 5);
     assert.equal(x.parents.length, 0);
@@ -42,9 +52,17 @@ describe('Computable', () => {
   it('correctly computes a larger example', () => {
     const z = new Cell(3, 'z');
     const y = new Cell(2, 'y');
-    const x = new Computable([y, z], (a, b) => a.value + b.value, 'x').compute();
+    const x = new Computable(
+      [y, z],
+      /** @type {ComputeFunction<any, number>} */ ((a, b) => a.value + b.value),
+      'x',
+    ).compute();
     const w = new Cell('results', 'w');
-    const v = new Computable([w, x], (a, b) => `${a.value}: ${b.key} is ${b.value}`, 'v').compute();
+    const v = new Computable(
+      [w, x],
+      /** @type {ComputeFunction<any, string>} */ ((a, b) => `${a.value}: ${b.key} is ${b.value}`),
+      'v',
+    ).compute();
 
     assert.equal(v.value, 'results: x is 5');
     assert.equal(v.parents.length, 0);
@@ -85,12 +103,20 @@ describe('Computable', () => {
 
     const z = new AutoCell(3);
     const y = new AutoCell(2);
-    const x = new Computable([y, z], (a, b) => {
-      count += 1;
-      return a.value + b.value;
-    }).compute();
+    const x = new Computable(
+      [y, z],
+      /** @type {ComputeFunction<any, number>} */ (
+        (a, b) => {
+          count += 1;
+          return a.value + b.value;
+        }
+      ),
+    ).compute();
     const w = new AutoCell(4);
-    const v = new Computable([w, x], (a, b) => a.value + b.value).compute();
+    const v = new Computable(
+      [w, x],
+      /** @type {ComputeFunction<any, number>} */ ((a, b) => a.value + b.value),
+    ).compute();
 
     assert.equal(v.value, 9);
     assert.equal(count, 1);
@@ -107,19 +133,26 @@ describe('AsyncComputable', () => {
     const z = new Cell(1);
     const y = new Cell(2);
 
-    const x = new AsyncComputable([y, z], async (a, b) => {
-      return a.value + b.value;
-    });
+    const x = new AsyncComputable(
+      [y, z],
+      /** @type {ComputeFunction<any, Promise<number>>} */ (async (a, b) => a.value + b.value),
+    );
 
     const w = new Cell(3);
-    const v = new AsyncComputable([w, x], async (a, b) => {
-      return a.value + (await b.value);
-    });
+    const v = new AsyncComputable(
+      [w, x],
+      /** @type {ComputeFunction<any, Promise<number>>} */ (
+        async (a, b) => a.value + (await b.value)
+      ),
+    );
 
     const u = new Cell(4);
-    const t = new AsyncComputable([u, v], async (a, b) => {
-      return a.value + (await b.value);
-    });
+    const t = new AsyncComputable(
+      [u, v],
+      /** @type {ComputeFunction<any, Promise<number>>} */ (
+        async (a, b) => a.value + (await b.value)
+      ),
+    );
 
     assert.equal(await t.compute().value, 10);
 
