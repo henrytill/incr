@@ -24,9 +24,7 @@ import { AsyncComputable, AutoCell, Cell } from './core.js';
  * @property {FileChangeInfo<string>} event
  */
 
-/**
- * @typedef {FileCell | Input | AutoInput | Target} BuildNode
- */
+/** @typedef {FileCell | Input | AutoInput | Target} BuildNode */
 
 /** @extends {Cell<HashDigest>} */
 export class FileCell extends Cell {
@@ -110,9 +108,7 @@ export class Input extends Cell {
     return ret;
   }
 
-  /**
-   * @returns {Promise<void>}
-   */
+  /** @returns {Promise<void>} */
   async close() {
     this.controller.abort();
     await this.watcher;
@@ -179,9 +175,7 @@ export class AutoInput extends AutoCell {
     return ret;
   }
 
-  /**
-   * @returns {Promise<void>}
-   */
+  /** @returns {Promise<void>} */
   async close() {
     this.controller.abort();
     await this.watcher;

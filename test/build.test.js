@@ -320,9 +320,7 @@ class WatchedInput {
     return new WatchedInput(input, consumer);
   }
 
-  /**
-   * @returns {Promise<void>}
-   */
+  /** @returns {Promise<void>} */
   async close() {
     this.input.notifications?.close();
     this.input.close();

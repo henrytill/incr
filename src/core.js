@@ -52,25 +52,19 @@ export class Cell {
     this.key = key;
   }
 
-  /**
-   * @returns {A}
-   */
+  /** @returns {A} */
   get value() {
     return this.value_;
   }
 
-  /**
-   * @param {A} value
-   */
+  /** @param {A} value */
   set value(value) {
     if (value === this.value_) return;
     this.value_ = value;
     this.update();
   }
 
-  /**
-   * @returns {void}
-   */
+  /** @returns {void} */
   update() {
     return doUpdate(this);
   }
@@ -96,9 +90,7 @@ export class Cell {
     return ret;
   }
 
-  /**
-   * @returns {Computable<any>[]}
-   */
+  /** @returns {Computable<any>[]} */
   roots() {
     return findRoots(this);
   }
@@ -154,23 +146,17 @@ export class Computable {
     }
   }
 
-  /**
-   * @returns {A | undefined}
-   */
+  /** @returns {A | undefined} */
   get value() {
     return this.value_;
   }
 
-  /**
-   * @returns {Computable<A>}
-   */
+  /** @returns {Computable<A>} */
   compute() {
     return doCompute(this);
   }
 
-  /**
-   * @returns {void}
-   */
+  /** @returns {void} */
   update() {
     return doUpdate(this);
   }
@@ -196,10 +182,7 @@ export class Computable {
     return ret;
   }
 
-  /**
-   *
-   * @returns {Computable<any>[]}
-   */
+  /** @returns {Computable<any>[]} */
   roots() {
     return findRoots(this);
   }
@@ -306,7 +289,6 @@ export class AutoCell extends Cell {
 }
 
 /**
- *
  * @param {Node<any>} node
  * @returns {void}
  */
