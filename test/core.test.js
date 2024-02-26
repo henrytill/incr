@@ -14,7 +14,7 @@ describe('Computable', () => {
 
     const y = new Cell(2);
     const z = new Cell(3);
-    const x = new Computable([y, z], function (a, b) {
+    const x = new Computable([y, z], (a, b) => {
       count += 1;
       return a.value + b.value;
     }).compute();
@@ -42,13 +42,7 @@ describe('Computable', () => {
   it('correctly computes a larger example', () => {
     const z = new Cell(3, 'z');
     const y = new Cell(2, 'y');
-    const x = new Computable(
-      [y, z],
-      function (a, b) {
-        return a.value + b.value;
-      },
-      'x',
-    ).compute();
+    const x = new Computable([y, z], (a, b) => a.value + b.value, 'x').compute();
     const w = new Cell('results', 'w');
     const v = new Computable([w, x], (a, b) => `${a.value}: ${b.key} is ${b.value}`, 'v').compute();
 
@@ -91,7 +85,7 @@ describe('Computable', () => {
 
     const z = new AutoCell(3);
     const y = new AutoCell(2);
-    const x = new Computable([y, z], function (a, b) {
+    const x = new Computable([y, z], (a, b) => {
       count += 1;
       return a.value + b.value;
     }).compute();
