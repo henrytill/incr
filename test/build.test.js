@@ -255,10 +255,10 @@ describe('AutoInput', () => {
   });
 
   it('can be instantiated n times to watch for file changes', async () => {
-    const n = 100;
+    const length = 100;
 
     /** @type {string[]} */
-    const files = Array.from({ length: n }, (_, i) =>
+    const files = Array.from({ length }, (_, i) =>
       path.join(dirname, `test-${i.toString().padStart(3, '0')}.txt`),
     );
 
