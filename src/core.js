@@ -209,7 +209,7 @@ export class Computable {
  * @param {Computable<any>} computable
  * @returns {Computable<any>}
  */
-function doCompute(computable) {
+const doCompute = (computable) => {
   if (!computable.shouldRebuild) return computable;
   const toCompute = [[computable]];
   /** @type {Set<Computable<any>>} */
@@ -239,13 +239,13 @@ function doCompute(computable) {
   }
 
   return computable;
-}
+};
 
 /**
  * @param {Node<any>} node
  * @returns {void}
  */
-function doUpdate(node) {
+const doUpdate = (node) => {
   const toUpdate = [node];
   /** @type {Set<Node<any>>} */
   const updated = new Set();
@@ -261,13 +261,13 @@ function doUpdate(node) {
     const unvisited = node.parents.filter((parent) => !updated.has(parent));
     toUpdate.push(...unvisited);
   }
-}
+};
 
 /**
  * @param {Node<any>} input
  * @returns {Computable<any>[]}
  */
-function findRoots(input) {
+const findRoots = (input) => {
   if (input instanceof Cell && input.parents.length === 0) return [];
 
   const ret = [];
@@ -289,7 +289,7 @@ function findRoots(input) {
   }
 
   return ret;
-}
+};
 
 /**
  * @template A
@@ -310,7 +310,7 @@ export class AutoCell extends Cell {
  * @param {Node<any>} node
  * @returns {void}
  */
-function doAutoUpdate(node) {
+const doAutoUpdate = (node) => {
   const toUpdate = [node];
   /** @type {Set<Node<any>>} */
   const updated = new Set();
@@ -327,7 +327,7 @@ function doAutoUpdate(node) {
     const unvisited = node.parents.filter((parent) => !updated.has(parent));
     toUpdate.push(...unvisited);
   }
-}
+};
 
 /**
  * @template T

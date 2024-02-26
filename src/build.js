@@ -195,11 +195,11 @@ export class Target extends AsyncComputable {}
  * @param {BinaryLike} input
  * @returns {HashDigest}
  */
-export function hash(input) {
+export const hash = (input) => {
   const hash = crypto.createHash('sha256');
   hash.update(input);
   return hash.digest('hex');
-}
+};
 
 /**
  * Implements leading-edge debounce on an asynchronous event stream
@@ -225,7 +225,7 @@ async function* debounce(events, delay) {
  * @param {AbortSignal} signal
  * @returns {Promise<void>}
  */
-async function watch(input, signal) {
+const watch = async (input, signal) => {
   const filename = input.key;
   try {
     const watcher = fs.watch(filename, { signal });
@@ -239,4 +239,4 @@ async function watch(input, signal) {
     }
     throw err;
   }
-}
+};
