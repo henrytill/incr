@@ -123,13 +123,13 @@ export class Input extends Cell {
 export class AutoInput extends AutoCell {
   /**
    * @readonly
-   * @typedef {Promise<void>}
+   * @type {Promise<void>}
    */
   watcher;
 
   /**
    * @readonly
-   * @typedef {AbortController}
+   * @type {AbortController}
    */
   controller = new AbortController();
 
