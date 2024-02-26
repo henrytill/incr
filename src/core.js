@@ -28,10 +28,7 @@ import crypto from 'node:crypto';
  * @template A
  */
 export class Cell {
-  /**
-   * @public
-   * @type {A}
-   */
+  /** @type {A} */
   value_;
 
   /** @type {Computable<any>[]} */
