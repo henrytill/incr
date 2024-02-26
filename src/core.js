@@ -191,26 +191,28 @@ export class Computable {
  */
 const doCompute = (computable) => {
   if (!computable.shouldRebuild) return computable;
+
   const toCompute = [[computable]];
-  /** @type {Set<Computable<any>>} */
-  const computed = new Set();
-
+  /** @type {() => Computable<any>[]} */
   const top = () => toCompute[toCompute.length - 1];
+  /** @type {(child: Node<any>) => boolean} */
+  const isComputable = (child) => child instanceof Computable && child.shouldRebuild;
 
-  for (let nodes = top(); nodes.length > 0; nodes = top()) {
+  for (let level = top(); level.length > 0; level = top()) {
     const computableChildren = /** @type {Computable<any>[]} */ (
-      nodes.flatMap((node) =>
-        node.children.filter((child) => child instanceof Computable && child.shouldRebuild),
-      )
+      level.flatMap((node) => node.children.filter(isComputable))
     );
     toCompute.push(computableChildren);
   }
 
+  /** @type {Set<Computable<any>>} */
+  const computed = new Set();
+
   while (toCompute.length > 0) {
-    const nodes = toCompute.pop();
-    assert.ok(nodes);
-    if (nodes.length === 0) continue;
-    for (const node of nodes) {
+    const level = toCompute.pop();
+    assert.ok(level);
+    if (level.length === 0) continue;
+    for (const node of level) {
       if (computed.has(node)) continue;
       node.value_ = node.computeFunction(...node.children);
       node.shouldRebuild = false;
@@ -250,10 +252,11 @@ const doUpdate = (node) => {
 const findRoots = (input) => {
   if (input instanceof Cell && input.parents.length === 0) return [];
 
-  const ret = [];
   const stack = [input];
   /** @type {Set<Node<any>>} */
   const visited = new Set();
+  /** @type {Computable<any>[]} */
+  const ret = [];
 
   while (stack.length > 0) {
     const node = stack.pop();
