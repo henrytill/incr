@@ -24,7 +24,7 @@
   ],
   "scripts": {
     "prepare": "tsc",
-    "lint": "eslint src test --ext .ts",
+    "lint": "eslint src test",
     "fmt": "prettier --write src test",
     "build": "tsc",
     "start": "tsc -w",
