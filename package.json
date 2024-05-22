@@ -6,7 +6,7 @@
   "bugs": {
     "url": "https://github.com/henrytill/incr/issues"
   },
-  "license": "MPL-2.0",
+  "license": "ISC",
   "author": {
     "name": "Henry Till",
     "email": "henrytill@gmail.com"
