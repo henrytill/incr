@@ -42,7 +42,7 @@ export class Cell {
 
   /**
    * @param {A} value_
-   * @param {string} key
+   * @param {string} [key]
    */
   constructor(value_, key = crypto.randomUUID()) {
     this.value_ = value_;
@@ -132,7 +132,7 @@ export class Computable {
   /**
    * @param {Node<any>[]} children
    * @param {ComputeFunction<any, A>} computeFunction
-   * @param {string} key
+   * @param {string} [key]
    */
   constructor(children, computeFunction, key = crypto.randomUUID()) {
     this.children = children;

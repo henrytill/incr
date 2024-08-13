@@ -31,7 +31,7 @@ export class FileCell extends Cell {
   /**
    * @private
    * @param {HashDigest} value
-   * @param {string} key
+   * @param {string} [key]
    */
   constructor(value, key) {
     super(value, key);
@@ -71,7 +71,7 @@ export class Input extends Cell {
   /**
    * @private
    * @param {HashDigest} value
-   * @param {string} key
+   * @param {string} [key]
    * @param {Channel<Message>} [notifications]
    */
   constructor(value, key, notifications) {
@@ -138,7 +138,7 @@ export class AutoInput extends AutoCell {
   /**
    * @private
    * @param {HashDigest} value
-   * @param {string} key
+   * @param {string} [key]
    * @param {Channel<Message>} [notifications]
    */
   constructor(value, key, notifications) {
