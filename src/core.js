@@ -186,6 +186,12 @@ export class Computable {
 }
 
 /**
+ * @param {Node<any>} child
+ * @returns {boolean}
+ */
+const isComputable = (child) => child instanceof Computable && child.shouldRebuild;
+
+/**
  * @param {Computable<any>} computable
  * @returns {Computable<any>}
  */
@@ -195,9 +201,6 @@ const doCompute = (computable) => {
   const toCompute = [[computable]];
   /** @type {() => Computable<any>[]} */
   const top = () => toCompute[toCompute.length - 1];
-  /** @type {(child: Node<any>) => boolean} */
-  const isComputable = (child) => child instanceof Computable && child.shouldRebuild;
-
   for (let level = top(); level.length > 0; level = top()) {
     const computableChildren = /** @type {Computable<any>[]} */ (
       level.flatMap((node) => node.children.filter(isComputable))
