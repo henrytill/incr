@@ -1,7 +1,6 @@
 // @ts-check
 
 import assert from 'node:assert/strict';
-// eslint-disable-next-line no-redeclare
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 
