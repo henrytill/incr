@@ -1,5 +1,3 @@
-// @ts-check
-
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 

@@ -1,5 +1,3 @@
-// @ts-check
-
 /**
  * @template T
  * @typedef {(value: T | PromiseLike<T>) => void} Resolve<T>
