@@ -32,7 +32,7 @@
     "test": "node --test test"
   },
   "devDependencies": {
-    "@eslint/js": "^9.9.1",
+    "@eslint/js": "^9.17.0",
     "@types/node": "^22.10.1",
     "eslint": "^9.16.0",
     "globals": "^15.12.0",
