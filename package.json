@@ -20,7 +20,7 @@
   "files": [
     "tsconfig.json",
     "src",
-    "dist"
+    "dist/src"
   ],
   "scripts": {
     "prepare": "tsc",
