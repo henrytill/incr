@@ -13,11 +13,8 @@
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        src = builtins.path {
-          path = ./.;
-          name = "incr-src";
-        };
-        npmRoot = src;
+        src = self;
+        npmRoot = self;
         incr = pkgs.buildNpmPackage {
           pname = "incr";
           version = "0.1.0";
