@@ -32,11 +32,11 @@
     "test": "node --test 'test/**/*.test.js'"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
-    "@types/node": "^25.0.9",
-    "eslint": "^9.39.2",
-    "globals": "^17.0.0",
-    "prettier": "^3.8.0",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.2.3",
+    "eslint": "^10.0.0",
+    "globals": "^17.3.0",
+    "prettier": "^3.8.1",
     "typescript": "^5.9.3"
   }
 }
