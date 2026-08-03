@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 import { Channel } from './channel.js';
 import { AsyncComputable, AutoCell, Cell } from './core.js';
 
-/** @typedef {import('node:crypto').BinaryLike} BinaryLike */
+/** @typedef {string | NodeJS.ArrayBufferView} BinaryLike */
 
 /** @typedef {import('node:fs').PathLike} PathLike */
 
